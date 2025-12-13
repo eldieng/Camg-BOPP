@@ -2,15 +2,14 @@ import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../types/index.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_in_production';
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
 /**
  * Génère un token JWT
  */
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: JWT_EXPIRES_IN,
-  });
+  const expiresIn = process.env.JWT_EXPIRES_IN || '24h';
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (jwt.sign as any)({ ...payload }, JWT_SECRET, { expiresIn });
 }
 
 /**

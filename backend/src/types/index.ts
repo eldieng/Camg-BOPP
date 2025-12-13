@@ -3,6 +3,7 @@ import { Request } from 'express';
 
 // Types pour l'authentification
 export interface JwtPayload {
+  id: string;
   userId: string;
   email: string;
   role: UserRole;

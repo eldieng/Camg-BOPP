@@ -1,0 +1,279 @@
+// Schéma Prisma pour CAMG-BOPP
+// Système de gestion des patients et files d'attente
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ÉNUMÉRATIONS
+// ============================================
+
+enum UserRole {
+  ACCUEIL
+  TEST_VUE
+  MEDECIN
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TicketStatus {
+  WAITING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum Priority {
+  NORMAL
+  ELDERLY
+  PREGNANT
+  DISABLED
+  EMERGENCY
+}
+
+enum Station {
+  ACCUEIL
+  TEST_VUE
+  CONSULTATION
+  LUNETTES
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  IN_SERVICE
+  COMPLETED
+  SKIPPED
+}
+
+enum EyeType {
+  OD
+  OG
+}
+
+// ============================================
+// MODÈLES
+// ============================================
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  firstName String
+  lastName  String
+  role      UserRole
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  consultations Consultation[] @relation("DoctorConsultations")
+  visionTests   VisionTest[]   @relation("TechnicianTests")
+
+  @@map("users")
+}
+
+model Patient {
+  id               String   @id @default(uuid())
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  gender           Gender
+  address          String?
+  phone            String?
+  emergencyContact String?
+  isPregnant       Boolean  @default(false)
+  isDisabled       Boolean  @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  tickets       Ticket[]
+  visionTests   VisionTest[]
+  consultations Consultation[]
+  appointments  Appointment[]
+
+  @@index([lastName, firstName])
+  @@index([phone])
+  @@map("patients")
+}
+
+model Ticket {
+  id             String       @id @default(uuid())
+  ticketNumber   String       @unique
+  qrCode         String       @unique
+  patientId      String
+  priority       Priority     @default(NORMAL)
+  priorityReason String?
+  status         TicketStatus @default(WAITING)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  queueEntry QueueEntry?
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("tickets")
+}
+
+model QueueEntry {
+  id          String      @id @default(uuid())
+  ticketId    String      @unique
+  station     Station
+  position    Int
+  status      QueueStatus @default(WAITING)
+  calledAt    DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  ticket Ticket @relation(fields: [ticketId], references: [id])
+
+  @@index([station, status])
+  @@index([position])
+  @@map("queue_entries")
+}
+
+model VisionTest {
+  id           String @id @default(uuid())
+  patientId    String
+  technicianId String
+
+  rightEye_sphere   Float?
+  rightEye_cylinder Float?
+  rightEye_axis     Int?
+  rightEye_acuity   String?
+  rightEye_addition Float?
+
+  leftEye_sphere   Float?
+  leftEye_cylinder Float?
+  leftEye_axis     Int?
+  leftEye_acuity   String?
+  leftEye_addition Float?
+
+  pupillaryDistance Float?
+  notes             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient    Patient @relation(fields: [patientId], references: [id])
+  technician User    @relation("TechnicianTests", fields: [technicianId], references: [id])
+
+  @@index([patientId])
+  @@index([createdAt])
+  @@map("vision_tests")
+}
+
+model Consultation {
+  id        String @id @default(uuid())
+  patientId String
+  doctorId  String
+
+  chiefComplaint        String?
+  diagnosis             String?
+  notes                 String?
+  intraocularPressureOD Float?
+  intraocularPressureOG Float?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id])
+  doctor        User           @relation("DoctorConsultations", fields: [doctorId], references: [id])
+  prescriptions Prescription[]
+
+  @@index([patientId])
+  @@index([doctorId])
+  @@index([createdAt])
+  @@map("consultations")
+}
+
+model Prescription {
+  id             String  @id @default(uuid())
+  consultationId String
+
+  eyeType  EyeType
+  sphere   Float?
+  cylinder Float?
+  axis     Int?
+  addition Float?
+
+  lensType String?
+  coating  String?
+
+  medication String?
+  dosage     String?
+  duration   String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@map("prescriptions")
+}
+
+model Appointment {
+  id            String   @id @default(uuid())
+  patientId     String
+  scheduledDate DateTime
+  scheduledTime String
+  reason        String?
+  status        String   @default("SCHEDULED")
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id])
+
+  @@index([scheduledDate])
+  @@index([patientId])
+  @@map("appointments")
+}
+
+model DailyStats {
+  id                    String   @id @default(uuid())
+  date                  DateTime @unique
+  totalPatients         Int      @default(0)
+  totalTickets          Int      @default(0)
+  completedTickets      Int      @default(0)
+  cancelledTickets      Int      @default(0)
+  avgWaitTimeMinutes    Float?
+  avgServiceTimeMinutes Float?
+  consultationsByDoctor Json?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("daily_stats")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([entity])
+  @@map("audit_logs")
+}

@@ -1,0 +1,26 @@
+databases:
+  - name: camg-bopp-db
+    databaseName: camg_bopp
+    user: camg_bopp_user
+    plan: free
+
+services:
+  - type: web
+    name: camg-bopp-api
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run db:deploy && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: camg-bopp-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: CORS_ORIGIN
+        sync: false

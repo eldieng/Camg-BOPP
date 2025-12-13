@@ -112,7 +112,8 @@ export default function DisplayPage() {
       for (const station of stations) {
         try {
           // Utiliser la route publique /display/ sans authentification
-          const response = await fetch(`http://localhost:3000/api/queue/display/${station}`);
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+          const response = await fetch(`${apiUrl}/queue/display/${station}`);
           if (response.ok) {
             const data = await response.json();
             if (data.success && data.data) {

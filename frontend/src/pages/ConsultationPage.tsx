@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, FileText, Plus, Trash2 } from 'lucide-react';
+import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, CreateConsultationDto, CreatePrescriptionDto, PatientHistory } from '../services/consultation.service';
@@ -180,14 +180,6 @@ export default function ConsultationPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const calculateAge = (dob: string) => {
-    const today = new Date();
-    const birth = new Date(dob);
-    let age = today.getFullYear() - birth.getFullYear();
-    if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-    return age;
   };
 
   return (

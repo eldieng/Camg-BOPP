@@ -248,11 +248,11 @@ export default function PatientHistoryPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 bg-blue-50 rounded-lg">
                       <p className="text-sm font-medium text-blue-700">Œil Droit (OD)</p>
-                      <p className="text-lg font-bold">{visionTests[0].visualAcuityOD || '-'}</p>
+                      <p className="text-lg font-bold">{visionTests[0].rightEye_acuity || '-'}</p>
                     </div>
                     <div className="p-3 bg-green-50 rounded-lg">
                       <p className="text-sm font-medium text-green-700">Œil Gauche (OG)</p>
-                      <p className="text-lg font-bold">{visionTests[0].visualAcuityOG || '-'}</p>
+                      <p className="text-lg font-bold">{visionTests[0].leftEye_acuity || '-'}</p>
                     </div>
                   </div>
                 </div>
@@ -322,19 +322,19 @@ export default function PatientHistoryPage() {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="p-3 bg-blue-50 rounded-lg text-center">
                         <p className="text-xs text-blue-600">Acuité OD</p>
-                        <p className="text-xl font-bold text-blue-800">{test.visualAcuityOD || '-'}</p>
+                        <p className="text-xl font-bold text-blue-800">{test.rightEye_acuity || '-'}</p>
                       </div>
                       <div className="p-3 bg-green-50 rounded-lg text-center">
                         <p className="text-xs text-green-600">Acuité OG</p>
-                        <p className="text-xl font-bold text-green-800">{test.visualAcuityOG || '-'}</p>
+                        <p className="text-xl font-bold text-green-800">{test.leftEye_acuity || '-'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg text-center">
                         <p className="text-xs text-gray-600">Correction OD</p>
-                        <p className="text-xl font-bold text-gray-800">{test.correctedAcuityOD || '-'}</p>
+                        <p className="text-xl font-bold text-gray-800">{test.rightEye_sphere ? `${test.rightEye_sphere}` : '-'}</p>
                       </div>
                       <div className="p-3 bg-gray-50 rounded-lg text-center">
                         <p className="text-xs text-gray-600">Correction OG</p>
-                        <p className="text-xl font-bold text-gray-800">{test.correctedAcuityOG || '-'}</p>
+                        <p className="text-xl font-bold text-gray-800">{test.leftEye_sphere ? `${test.leftEye_sphere}` : '-'}</p>
                       </div>
                     </div>
                     {test.notes && (

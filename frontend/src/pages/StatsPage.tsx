@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, Users, Ticket, Eye, Stethoscope, Clock, RefreshCw, TrendingUp } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
-import { statsService, TodayStats, DailyTrend, StationStats } from '../services/stats.service';
+import { statsService, TodayStats, DailyTrend } from '../services/stats.service';
 
 export default function StatsPage() {
   const [todayStats, setTodayStats] = useState<TodayStats | null>(null);

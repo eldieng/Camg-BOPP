@@ -10,21 +10,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares - CORS configuration
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173'];
+// Middlewares - CORS configuration (permissive for testing)
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    // Allow configured origins
-    if (corsOrigins.includes(origin) || corsOrigins.includes('*')) {
-      return callback(null, true);
-    }
-    // In production, log blocked origins for debugging
-    console.log(`CORS blocked origin: ${origin}, allowed: ${corsOrigins.join(', ')}`);
-    return callback(null, true); // Temporarily allow all for debugging
-  },
+  origin: true, // Allow all origins
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

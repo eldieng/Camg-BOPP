@@ -66,6 +66,7 @@ export class AuthService {
 
     // Générer le token JWT
     const payload: JwtPayload = {
+      id: user.id,
       userId: user.id,
       email: user.email,
       role: user.role,

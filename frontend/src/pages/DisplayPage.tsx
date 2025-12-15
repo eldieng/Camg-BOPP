@@ -428,6 +428,7 @@ export default function DisplayPage() {
                       <>
                         <div className="text-4xl font-bold mb-1">{queue.room1.number.split('-').pop()}</div>
                         <div className="text-sm text-white/90">{queue.room1.patient}</div>
+                        <div className="text-xs text-white/60 mt-1">Ticket: {queue.room1.number}</div>
                       </>
                     ) : (
                       <div className="text-2xl text-white/50">Libre</div>
@@ -442,6 +443,7 @@ export default function DisplayPage() {
                       <>
                         <div className="text-4xl font-bold mb-1">{queue.room2.number.split('-').pop()}</div>
                         <div className="text-sm text-white/90">{queue.room2.patient}</div>
+                        <div className="text-xs text-white/60 mt-1">Ticket: {queue.room2.number}</div>
                       </>
                     ) : (
                       <div className="text-2xl text-white/50">Libre</div>

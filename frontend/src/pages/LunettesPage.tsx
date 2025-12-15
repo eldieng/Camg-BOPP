@@ -187,7 +187,7 @@ export default function LunettesPage() {
           <CardHeader>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
               <CardTitle className="text-base sm:text-lg">File d'attente ({waitingPatients.length})</CardTitle>
-              <Button onClick={handleCallNext} disabled={isLoading || waitingPatients.length === 0} size="sm" className="w-full sm:w-auto">
+              <Button onClick={handleCallNext} disabled={isLoading || waitingPatients.length === 0 || currentPatient !== null} size="sm" className="w-full sm:w-auto">
                 <Phone className="w-4 h-4 mr-2" />
                 Appeler suivant
               </Button>

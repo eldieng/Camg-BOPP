@@ -138,6 +138,7 @@ export class TicketService {
 
     // Déterminer la priorité
     const { priority, reason } = await this.determinePriority(data.patientId, data.priority);
+    console.log(`[TICKET] Patient ${patient.firstName} ${patient.lastName} - isPregnant: ${patient.isPregnant}, isDisabled: ${patient.isDisabled} => Priority: ${priority}`);
 
     // Générer le numéro de ticket et le QR code
     const ticketNumber = await this.generateTicketNumber();

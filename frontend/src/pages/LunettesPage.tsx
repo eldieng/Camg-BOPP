@@ -216,6 +216,19 @@ export default function LunettesPage() {
                         <div className="text-sm text-gray-500">
                           Ticket: {entry.ticket.ticketNumber} • {calculateAge(entry.ticket.patient.dateOfBirth)} ans
                         </div>
+                        {entry.ticket.priority !== 'NORMAL' && (
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                            entry.ticket.priority === 'EMERGENCY' ? 'bg-red-100 text-red-800' :
+                            entry.ticket.priority === 'DISABLED' ? 'bg-purple-100 text-purple-800' :
+                            entry.ticket.priority === 'PREGNANT' ? 'bg-pink-100 text-pink-800' :
+                            entry.ticket.priority === 'ELDERLY' ? 'bg-amber-100 text-amber-800' : ''
+                          }`}>
+                            {entry.ticket.priority === 'EMERGENCY' ? '🚨 Urgence' :
+                             entry.ticket.priority === 'DISABLED' ? '♿ PMR' :
+                             entry.ticket.priority === 'PREGNANT' ? '🤰 Enceinte' :
+                             entry.ticket.priority === 'ELDERLY' ? '👴 Senior' : entry.ticket.priority}
+                          </span>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">

@@ -254,6 +254,19 @@ export default function ConsultationPage() {
                               Salle {entry.roomNumber}
                             </span>
                           )}
+                          {entry.ticket.priority !== 'NORMAL' && (
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
+                              entry.ticket.priority === 'EMERGENCY' ? 'bg-red-100 text-red-800' :
+                              entry.ticket.priority === 'DISABLED' ? 'bg-purple-100 text-purple-800' :
+                              entry.ticket.priority === 'PREGNANT' ? 'bg-pink-100 text-pink-800' :
+                              entry.ticket.priority === 'ELDERLY' ? 'bg-amber-100 text-amber-800' : ''
+                            }`}>
+                              {entry.ticket.priority === 'EMERGENCY' ? '🚨 Urgence' :
+                               entry.ticket.priority === 'DISABLED' ? '♿ PMR' :
+                               entry.ticket.priority === 'PREGNANT' ? '🤰 Enceinte' :
+                               entry.ticket.priority === 'ELDERLY' ? '👴 Senior' : entry.ticket.priority}
+                            </span>
+                          )}
                         </div>
                       </div>
                       {entry.status === 'CALLED' && (

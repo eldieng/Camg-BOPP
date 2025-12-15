@@ -49,22 +49,12 @@ function App() {
               </ProtectedRoute>
             } />
             
-            {/* Module Consultation - Salle 1 */}
-            <Route path="consultation/1" element={
+            {/* Module Consultation */}
+            <Route path="consultation" element={
               <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
                 <ConsultationPage />
               </ProtectedRoute>
             } />
-            
-            {/* Module Consultation - Salle 2 */}
-            <Route path="consultation/2" element={
-              <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
-                <ConsultationPage />
-              </ProtectedRoute>
-            } />
-            
-            {/* Redirection consultation par défaut vers salle 1 */}
-            <Route path="consultation" element={<Navigate to="/consultation/1" replace />} />
             
             {/* Module Statistiques */}
             <Route path="stats" element={<StatsPage />} />

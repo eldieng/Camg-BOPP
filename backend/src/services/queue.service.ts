@@ -118,12 +118,19 @@ export class QueueService {
 
     if (!nextEntry) return null;
 
+    // Pour la station CONSULTATION, assigner une salle
+    let roomNumber: number | null = null;
+    if (station === 'CONSULTATION') {
+      roomNumber = await this.getLeastBusyRoomNumber();
+    }
+
     // Mettre à jour le statut
     const updated = await prisma.queueEntry.update({
       where: { id: nextEntry.id },
       data: {
         status: 'CALLED',
         calledAt: new Date(),
+        roomNumber,
       },
       include: {
         ticket: {
@@ -292,23 +299,33 @@ export class QueueService {
   }
 
   /**
-   * Trouver la salle de consultation la moins chargée
+   * Trouver le numéro de salle de consultation la moins chargée (1 ou 2)
    */
-  async getLeastBusyConsultation(): Promise<Station> {
+  async getLeastBusyRoomNumber(): Promise<number> {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-    const [waiting1, waiting2] = await Promise.all([
+    const [inRoom1, inRoom2] = await Promise.all([
       prisma.queueEntry.count({
-        where: { station: 'CONSULTATION_1' as Station, status: 'WAITING', createdAt: { gte: startOfDay } },
+        where: { 
+          station: 'CONSULTATION' as Station, 
+          roomNumber: 1,
+          status: { in: ['CALLED', 'IN_SERVICE'] }, 
+          createdAt: { gte: startOfDay } 
+        },
       }),
       prisma.queueEntry.count({
-        where: { station: 'CONSULTATION_2' as Station, status: 'WAITING', createdAt: { gte: startOfDay } },
+        where: { 
+          station: 'CONSULTATION' as Station, 
+          roomNumber: 2,
+          status: { in: ['CALLED', 'IN_SERVICE'] }, 
+          createdAt: { gte: startOfDay } 
+        },
       }),
     ]);
 
-    // Retourner la salle avec le moins de patients en attente
-    return waiting1 <= waiting2 ? 'CONSULTATION_1' as Station : 'CONSULTATION_2' as Station;
+    // Retourner la salle avec le moins de patients en cours
+    return inRoom1 <= inRoom2 ? 1 : 2;
   }
 
   /**

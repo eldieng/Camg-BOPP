@@ -1,7 +1,7 @@
 import api from './api';
 import { ApiResponse } from '../types';
 
-export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION_1' | 'CONSULTATION_2' | 'LUNETTES';
+export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION' | 'LUNETTES';
 export type QueueStatus = 'WAITING' | 'CALLED' | 'IN_SERVICE' | 'COMPLETED' | 'SKIPPED';
 
 export interface QueueEntry {
@@ -10,6 +10,7 @@ export interface QueueEntry {
   station: Station;
   position: number;
   status: QueueStatus;
+  roomNumber?: number;  // Numéro de salle assigné (1 ou 2 pour consultation)
   calledAt?: string;
   startedAt?: string;
   ticket: {

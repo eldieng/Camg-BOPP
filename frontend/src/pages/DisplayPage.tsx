@@ -6,6 +6,7 @@ interface QueueDisplay {
   stationLabel: string;
   currentNumber: string | null;
   currentPatient: string | null;
+  currentRoomNumber: number | null;
   waitingCount: number;
   nextNumbers: string[];
 }
@@ -15,27 +16,25 @@ interface Announcement {
   station: string;
   stationLabel: string;
   patientName: string;
+  roomNumber: number | null;
   timestamp: number;
 }
 
 const STATION_LABELS: Record<string, string> = {
   TEST_VUE: 'Test de Vue',
-  CONSULTATION_1: 'Consultation 1',
-  CONSULTATION_2: 'Consultation 2',
+  CONSULTATION: 'Consultation',
   LUNETTES: 'Salle des Lunettes',
 };
 
 const STATION_VOICE_LABELS: Record<string, string> = {
   TEST_VUE: 'salle de Test de Vue',
-  CONSULTATION_1: 'salle de Consultation numéro 1',
-  CONSULTATION_2: 'salle de Consultation numéro 2',
+  CONSULTATION: 'salle de Consultation',
   LUNETTES: 'salle des Lunettes',
 };
 
 const STATION_COLORS: Record<string, string> = {
   TEST_VUE: 'from-blue-500 to-blue-600',
-  CONSULTATION_1: 'from-green-500 to-green-600',
-  CONSULTATION_2: 'from-teal-500 to-teal-600',
+  CONSULTATION: 'from-green-500 to-green-600',
   LUNETTES: 'from-purple-500 to-purple-600',
 };
 
@@ -109,7 +108,7 @@ export default function DisplayPage() {
   // Charger les données des files d'attente
   const loadQueues = async () => {
     try {
-      const stations = ['TEST_VUE', 'CONSULTATION_1', 'CONSULTATION_2', 'LUNETTES'];
+      const stations = ['TEST_VUE', 'CONSULTATION', 'LUNETTES'];
       const queueData: QueueDisplay[] = [];
 
       for (const station of stations) {
@@ -132,6 +131,7 @@ export default function DisplayPage() {
                 stationLabel: STATION_LABELS[station],
                 currentNumber: inService?.ticket?.ticketNumber || null,
                 currentPatient: inService ? `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}` : null,
+                currentRoomNumber: inService?.roomNumber || null,
                 waitingCount: stats.waiting,
                 nextNumbers: waiting.slice(0, 5).map((q: any) => q.ticket.ticketNumber),
               });
@@ -147,6 +147,7 @@ export default function DisplayPage() {
                   station,
                   stationLabel: STATION_LABELS[station],
                   patientName: `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}`,
+                  roomNumber: inService.roomNumber || null,
                   timestamp: Date.now(),
                 });
               }
@@ -190,7 +191,11 @@ export default function DisplayPage() {
 
     // Synthèse vocale (utiliser les refs pour avoir les valeurs actuelles)
     if (soundEnabledRef.current && audioUnlockedRef.current && 'speechSynthesis' in window) {
-      const voiceLabel = STATION_VOICE_LABELS[ann.station] || ann.stationLabel;
+      let voiceLabel = STATION_VOICE_LABELS[ann.station] || ann.stationLabel;
+      // Pour la consultation, ajouter le numéro de salle
+      if (ann.station === 'CONSULTATION' && ann.roomNumber) {
+        voiceLabel = `salle de Consultation numéro ${ann.roomNumber}`;
+      }
       const utterance = new SpeechSynthesisUtterance(
         `Ticket numéro ${ann.ticketNumber.split('-').pop()}, ${ann.patientName}, veuillez vous présenter à la ${voiceLabel}`
       );
@@ -332,7 +337,10 @@ export default function DisplayPage() {
             <div className="text-8xl font-bold mb-6">{announcement.ticketNumber.split('-').pop()}</div>
             <div className="text-4xl font-semibold mb-4">{announcement.patientName}</div>
             <div className="text-2xl text-yellow-100">
-              Veuillez vous présenter au <span className="font-bold">{announcement.stationLabel}</span>
+              Veuillez vous présenter {announcement.station === 'CONSULTATION' && announcement.roomNumber 
+                ? <span>à la <span className="font-bold">Salle de Consultation {announcement.roomNumber}</span></span>
+                : <span>au <span className="font-bold">{announcement.stationLabel}</span></span>
+              }
             </div>
           </div>
         </div>

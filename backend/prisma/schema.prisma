@@ -45,8 +45,7 @@ enum Priority {
 enum Station {
   ACCUEIL
   TEST_VUE
-  CONSULTATION_1
-  CONSULTATION_2
+  CONSULTATION
   LUNETTES
 }
 
@@ -135,6 +134,7 @@ model QueueEntry {
   station     Station
   position    Int
   status      QueueStatus @default(WAITING)
+  roomNumber  Int?        // Numéro de salle assigné (1 ou 2 pour consultation)
   calledAt    DateTime?
   startedAt   DateTime?
   completedAt DateTime?

@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
@@ -7,9 +6,6 @@ import { consultationService, CreateConsultationDto, CreatePrescriptionDto, Pati
 import { visionTestService } from '../services/visionTest.service';
 
 export default function ConsultationPage() {
-  const { roomNumber } = useParams<{ roomNumber: string }>();
-  const station = roomNumber === '2' ? 'CONSULTATION_2' : 'CONSULTATION_1';
-  const roomLabel = roomNumber === '2' ? 'Salle 2' : 'Salle 1';
   
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [stats, setStats] = useState<StationStats | null>(null);
@@ -34,7 +30,7 @@ export default function ConsultationPage() {
   const loadQueue = async () => {
     try {
       setError('');
-      const data = await queueService.getQueue(station);
+      const data = await queueService.getQueue('CONSULTATION');
       setQueue(data.queue);
       setStats(data.stats);
       
@@ -75,7 +71,7 @@ export default function ConsultationPage() {
     setError('');
     setIsLoading(true);
     try {
-      const entry = await queueService.callNext(station);
+      const entry = await queueService.callNext('CONSULTATION');
       if (entry) {
         setSuccess(`Patient ${entry.ticket.patient.lastName} appelé`);
         setTimeout(() => setSuccess(''), 3000);
@@ -190,7 +186,7 @@ export default function ConsultationPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Consultation - {roomLabel}</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Consultation Médicale</h1>
         <Button onClick={loadQueue} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
           Actualiser
         </Button>
@@ -249,9 +245,16 @@ export default function ConsultationPage() {
                       <div>
                         <p className="font-medium text-sm">{entry.ticket.patient.lastName} {entry.ticket.patient.firstName}</p>
                         <p className="text-xs text-gray-500">{entry.ticket.ticketNumber}</p>
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${queueService.getStatusColor(entry.status)}`}>
-                          {queueService.getStatusLabel(entry.status)}
-                        </span>
+                        <div className="flex gap-1 flex-wrap">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${queueService.getStatusColor(entry.status)}`}>
+                            {queueService.getStatusLabel(entry.status)}
+                          </span>
+                          {entry.roomNumber && (
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-semibold">
+                              Salle {entry.roomNumber}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       {entry.status === 'CALLED' && (
                         <div className="flex flex-col space-y-1">

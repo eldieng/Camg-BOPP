@@ -140,7 +140,7 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, re
         </div>
       </div>
 
-      {/* QR Code avec cadre */}
+      {/* QR Code avec cadre - pointe vers l'URL de vérification */}
       <div style={{ 
         textAlign: 'center', 
         margin: '2mm 0',
@@ -150,7 +150,7 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, re
         borderRadius: '1mm'
       }}>
         <QRCodeSVG
-          value={ticket.qrCode}
+          value={`${window.location.origin}/ticket/${ticket.qrCode}`}
           size={60}
           level="M"
           includeMargin={false}

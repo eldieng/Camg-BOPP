@@ -228,7 +228,10 @@ export default function ConsultationPage() {
                 isLoading={isLoading} 
                 leftIcon={<Phone className="w-4 h-4" />} 
                 size="sm"
-                disabled={queue.some(e => e.status === 'CALLED' || e.status === 'IN_SERVICE')}
+                disabled={
+                  // Désactiver seulement si les 2 salles sont occupées
+                  queue.filter(e => (e.status === 'CALLED' || e.status === 'IN_SERVICE')).length >= 2
+                }
               >
                 Suivant
               </Button>

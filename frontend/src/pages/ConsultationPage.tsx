@@ -401,7 +401,7 @@ export default function ConsultationPage() {
                         onClick={(e) => handleSubmit(e, false)}
                         leftIcon={<Check className="w-5 h-5" />}
                       >
-                        Terminer (sans lunettes)
+                        Terminer (Médicament)
                       </Button>
                       <Button 
                         type="button" 

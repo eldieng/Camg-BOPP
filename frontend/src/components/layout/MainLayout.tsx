@@ -203,7 +203,7 @@ export default function MainLayout() {
             <Menu className="w-6 h-6" />
           </button>
           <div className="flex-1" />
-          <div className="text-sm text-gray-500">
+          <div className="text-xs sm:text-sm text-gray-500 hidden sm:block">
             {new Date().toLocaleDateString('fr-FR', {
               weekday: 'long',
               year: 'numeric',
@@ -211,10 +211,16 @@ export default function MainLayout() {
               day: 'numeric',
             })}
           </div>
+          <div className="text-xs text-gray-500 sm:hidden">
+            {new Date().toLocaleDateString('fr-FR', {
+              day: 'numeric',
+              month: 'short',
+            })}
+          </div>
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-3 sm:p-4 md:p-6">
           <Outlet />
         </main>
       </div>

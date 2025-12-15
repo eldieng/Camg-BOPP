@@ -143,31 +143,31 @@ export default function TestVuePage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Test de Vue</h1>
-        <Button onClick={loadQueue} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Test de Vue</h1>
+        <Button onClick={loadQueue} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} size="sm">
           Actualiser
         </Button>
       </div>
 
       {/* Statistiques */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-            <p className="text-sm text-yellow-700">En attente</p>
-            <p className="text-2xl font-bold text-yellow-800">{stats.waiting}</p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4">
+          <div className="bg-yellow-50 p-3 sm:p-4 rounded-lg border border-yellow-200">
+            <p className="text-xs sm:text-sm text-yellow-700">En attente</p>
+            <p className="text-xl sm:text-2xl font-bold text-yellow-800">{stats.waiting}</p>
           </div>
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-700">En service</p>
-            <p className="text-2xl font-bold text-blue-800">{stats.inService}</p>
+          <div className="bg-blue-50 p-3 sm:p-4 rounded-lg border border-blue-200">
+            <p className="text-xs sm:text-sm text-blue-700">En service</p>
+            <p className="text-xl sm:text-2xl font-bold text-blue-800">{stats.inService}</p>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-            <p className="text-sm text-green-700">Terminés</p>
-            <p className="text-2xl font-bold text-green-800">{stats.completed}</p>
+          <div className="bg-green-50 p-3 sm:p-4 rounded-lg border border-green-200">
+            <p className="text-xs sm:text-sm text-green-700">Terminés</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-800">{stats.completed}</p>
           </div>
-          <div className="bg-gray-50 p-4 rounded-lg border">
-            <p className="text-sm text-gray-600">Temps moyen</p>
-            <p className="text-2xl font-bold">{stats.avgWaitTime} min</p>
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border">
+            <p className="text-xs sm:text-sm text-gray-600">Temps moyen</p>
+            <p className="text-xl sm:text-2xl font-bold">{stats.avgWaitTime} min</p>
           </div>
         </div>
       )}
@@ -175,13 +175,13 @@ export default function TestVuePage() {
       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">{error}</div>}
       {success && <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-green-700">{success}</div>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* File d'attente */}
         <Card>
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <CardTitle>File d'attente ({queue.filter(e => e.status === 'WAITING').length})</CardTitle>
-              <Button onClick={handleCallNext} isLoading={isLoading} leftIcon={<Phone className="w-4 h-4" />} size="sm">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+              <CardTitle className="text-base sm:text-lg">File d'attente ({queue.filter(e => e.status === 'WAITING').length})</CardTitle>
+              <Button onClick={handleCallNext} isLoading={isLoading} leftIcon={<Phone className="w-4 h-4" />} size="sm" className="w-full sm:w-auto">
                 Appeler suivant
               </Button>
             </div>
@@ -193,28 +193,26 @@ export default function TestVuePage() {
               ) : (
                 queue.map((entry) => (
                   <div key={entry.id} className={`p-3 rounded-lg border ${entry.status === 'IN_SERVICE' ? 'bg-blue-50 border-blue-300' : entry.status === 'CALLED' ? 'bg-orange-50 border-orange-300' : 'bg-gray-50'}`}>
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-medium">{entry.ticket.patient.lastName} {entry.ticket.patient.firstName}</p>
-                        <p className="text-sm text-gray-500">
-                          Ticket: {entry.ticket.ticketNumber} • {calculateAge(entry.ticket.patient.dateOfBirth)} ans
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-sm sm:text-base truncate">{entry.ticket.patient.lastName} {entry.ticket.patient.firstName}</p>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          {entry.ticket.ticketNumber} • {calculateAge(entry.ticket.patient.dateOfBirth)} ans
                         </p>
                         <span className={`text-xs px-2 py-0.5 rounded-full ${queueService.getStatusColor(entry.status)}`}>
                           {queueService.getStatusLabel(entry.status)}
                         </span>
                       </div>
-                      <div className="flex space-x-1">
-                        {entry.status === 'CALLED' && (
-                          <>
-                            <Button size="sm" variant="success" onClick={() => handleStartService(entry)} leftIcon={<Play className="w-3 h-3" />}>
-                              Démarrer
-                            </Button>
-                            <Button size="sm" variant="danger" onClick={() => handleNoShow(entry)} leftIcon={<UserX className="w-3 h-3" />}>
-                              Absent
-                            </Button>
-                          </>
-                        )}
-                      </div>
+                      {entry.status === 'CALLED' && (
+                        <div className="flex gap-1 w-full sm:w-auto">
+                          <Button size="sm" variant="success" onClick={() => handleStartService(entry)} leftIcon={<Play className="w-3 h-3" />} className="flex-1 sm:flex-none">
+                            Démarrer
+                          </Button>
+                          <Button size="sm" variant="danger" onClick={() => handleNoShow(entry)} leftIcon={<UserX className="w-3 h-3" />} className="flex-1 sm:flex-none">
+                            Absent
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))
@@ -239,7 +237,7 @@ export default function TestVuePage() {
                 {/* Œil Droit */}
                 <div className="p-3 bg-blue-50 rounded-lg">
                   <h4 className="font-medium text-blue-800 mb-2">Œil Droit (OD)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <Input label="Acuité" value={formData.rightEye_acuity || ''} onChange={(e) => setFormData({ ...formData, rightEye_acuity: e.target.value })} placeholder="10/10" />
                     <Input type="number" step="0.25" label="Sphère" value={formData.rightEye_sphere ?? ''} onChange={(e) => setFormData({ ...formData, rightEye_sphere: e.target.value ? parseFloat(e.target.value) : undefined })} />
                     <Input type="number" step="0.25" label="Cylindre" value={formData.rightEye_cylinder ?? ''} onChange={(e) => setFormData({ ...formData, rightEye_cylinder: e.target.value ? parseFloat(e.target.value) : undefined })} />
@@ -251,7 +249,7 @@ export default function TestVuePage() {
                 {/* Œil Gauche */}
                 <div className="p-3 bg-green-50 rounded-lg">
                   <h4 className="font-medium text-green-800 mb-2">Œil Gauche (OG)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     <Input label="Acuité" value={formData.leftEye_acuity || ''} onChange={(e) => setFormData({ ...formData, leftEye_acuity: e.target.value })} placeholder="10/10" />
                     <Input type="number" step="0.25" label="Sphère" value={formData.leftEye_sphere ?? ''} onChange={(e) => setFormData({ ...formData, leftEye_sphere: e.target.value ? parseFloat(e.target.value) : undefined })} />
                     <Input type="number" step="0.25" label="Cylindre" value={formData.leftEye_cylinder ?? ''} onChange={(e) => setFormData({ ...formData, leftEye_cylinder: e.target.value ? parseFloat(e.target.value) : undefined })} />
@@ -270,11 +268,11 @@ export default function TestVuePage() {
                   <textarea className="w-full px-4 py-2 border border-gray-300 rounded-lg" rows={2} value={formData.notes || ''} onChange={(e) => setFormData({ ...formData, notes: e.target.value })} />
                 </div>
 
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button type="submit" className="flex-1" isLoading={isLoading} leftIcon={<Check className="w-5 h-5" />}>
                     Enregistrer & Transférer
                   </Button>
-                  <Button type="button" variant="secondary" onClick={() => setCurrentPatient(null)} leftIcon={<X className="w-5 h-5" />}>
+                  <Button type="button" variant="secondary" onClick={() => setCurrentPatient(null)} leftIcon={<X className="w-5 h-5" />} className="w-full sm:w-auto">
                     Annuler
                   </Button>
                 </div>

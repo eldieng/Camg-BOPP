@@ -118,9 +118,9 @@ export default function AccueilPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Accueil - Gestion des Tickets</h1>
-        <Button onClick={loadTickets} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Accueil - Gestion des Tickets</h1>
+        <Button onClick={loadTickets} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} size="sm">
           Actualiser
         </Button>
       </div>
@@ -139,63 +139,63 @@ export default function AccueilPage() {
 
       {/* Résumé */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Total</p>
-            <p className="text-2xl font-bold">{summary.total}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm border">
+            <p className="text-xs sm:text-sm text-gray-600">Total</p>
+            <p className="text-xl sm:text-2xl font-bold">{summary.total}</p>
           </div>
-          <div className="bg-yellow-50 p-4 rounded-lg shadow-sm border border-yellow-200">
-            <p className="text-sm text-yellow-700">En attente</p>
-            <p className="text-2xl font-bold text-yellow-800">{summary.waiting}</p>
+          <div className="bg-yellow-50 p-3 sm:p-4 rounded-lg shadow-sm border border-yellow-200">
+            <p className="text-xs sm:text-sm text-yellow-700">En attente</p>
+            <p className="text-xl sm:text-2xl font-bold text-yellow-800">{summary.waiting}</p>
           </div>
-          <div className="bg-blue-50 p-4 rounded-lg shadow-sm border border-blue-200">
-            <p className="text-sm text-blue-700">En cours</p>
-            <p className="text-2xl font-bold text-blue-800">{summary.inProgress}</p>
+          <div className="bg-blue-50 p-3 sm:p-4 rounded-lg shadow-sm border border-blue-200">
+            <p className="text-xs sm:text-sm text-blue-700">En cours</p>
+            <p className="text-xl sm:text-2xl font-bold text-blue-800">{summary.inProgress}</p>
           </div>
-          <div className="bg-green-50 p-4 rounded-lg shadow-sm border border-green-200">
-            <p className="text-sm text-green-700">Terminés</p>
-            <p className="text-2xl font-bold text-green-800">{summary.completed}</p>
+          <div className="bg-green-50 p-3 sm:p-4 rounded-lg shadow-sm border border-green-200">
+            <p className="text-xs sm:text-sm text-green-700">Terminés</p>
+            <p className="text-xl sm:text-2xl font-bold text-green-800">{summary.completed}</p>
           </div>
-          <div className="bg-gray-50 p-4 rounded-lg shadow-sm border">
-            <p className="text-sm text-gray-600">Annulés</p>
-            <p className="text-2xl font-bold text-gray-800">{summary.cancelled}</p>
+          <div className="bg-gray-50 p-3 sm:p-4 rounded-lg shadow-sm border col-span-2 sm:col-span-1">
+            <p className="text-xs sm:text-sm text-gray-600">Annulés</p>
+            <p className="text-xl sm:text-2xl font-bold text-gray-800">{summary.cancelled}</p>
           </div>
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {/* Formulaire */}
         <Card>
           <CardHeader>
-            <div className="flex space-x-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <button
                 onClick={() => setActiveTab('new')}
-                className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'new' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base ${activeTab === 'new' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'}`}
               >
-                <UserPlus className="w-4 h-4 inline mr-2" />
-                Nouveau Patient
+                <UserPlus className="w-4 h-4 inline mr-1 sm:mr-2" />
+                Nouveau
               </button>
               <button
                 onClick={() => setActiveTab('search')}
-                className={`px-4 py-2 rounded-lg font-medium ${activeTab === 'search' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`flex-1 sm:flex-none px-3 sm:px-4 py-2 rounded-lg font-medium text-sm sm:text-base ${activeTab === 'search' ? 'bg-primary-100 text-primary-700' : 'text-gray-600 hover:bg-gray-100'}`}
               >
-                <Search className="w-4 h-4 inline mr-2" />
-                Patient Existant
+                <Search className="w-4 h-4 inline mr-1 sm:mr-2" />
+                Existant
               </button>
             </div>
           </CardHeader>
           <CardContent>
             {activeTab === 'new' ? (
-              <form onSubmit={handleCreatePatient} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <form onSubmit={handleCreatePatient} className="space-y-3 sm:space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Input label="Prénom *" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
                   <Input label="Nom *" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <Input type="date" label="Date de naissance *" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Genre *</label>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded-lg" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'MALE' | 'FEMALE' })}>
+                    <select className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-base" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'MALE' | 'FEMALE' })}>
                       <option value="MALE">Homme</option>
                       <option value="FEMALE">Femme</option>
                     </select>
@@ -203,7 +203,7 @@ export default function AccueilPage() {
                 </div>
                 <Input label="Téléphone" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                 <Input label="Adresse" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                <div className="flex space-x-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
                   <label className="flex items-center">
                     <input type="checkbox" checked={formData.isPregnant} onChange={(e) => setFormData({ ...formData, isPregnant: e.target.checked })} className="mr-2" />
                     Femme enceinte
@@ -251,7 +251,7 @@ export default function AccueilPage() {
               <CardTitle className="text-green-700">✅ Ticket Créé</CardTitle>
             </CardHeader>
             <CardContent className="text-center">
-              <div className="text-6xl font-bold text-primary-600 mb-4">{createdTicket.ticketNumber}</div>
+              <div className="text-4xl sm:text-6xl font-bold text-primary-600 mb-4">{createdTicket.ticketNumber}</div>
               {createdTicket.qrCodeImage && <img src={createdTicket.qrCodeImage} alt="QR Code" className="mx-auto mb-4" />}
               <p className="text-lg mb-2">{createdTicket.patient.lastName} {createdTicket.patient.firstName}</p>
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${ticketService.getPriorityColor(createdTicket.priority)}`}>
@@ -260,7 +260,7 @@ export default function AccueilPage() {
               {createdTicket.estimatedWaitTime && (
                 <p className="mt-4 text-gray-600">Temps d'attente estimé: ~{createdTicket.estimatedWaitTime} min</p>
               )}
-              <div className="mt-4 flex space-x-2 justify-center">
+              <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:space-x-2 justify-center">
                 <Button 
                   variant="secondary" 
                   leftIcon={<Printer className="w-4 h-4" />}
@@ -300,17 +300,17 @@ export default function AccueilPage() {
                   <p className="text-center text-gray-500 py-8">Aucun patient en attente</p>
                 ) : (
                   tickets.filter(t => t.status === 'WAITING').map((ticket) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <span className="text-lg font-bold text-primary-600">{ticket.ticketNumber.split('-')[1]}</span>
-                        <div>
-                          <p className="font-medium">{ticket.patient.lastName} {ticket.patient.firstName}</p>
+                    <div key={ticket.id} className="flex items-center justify-between p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                        <span className="text-base sm:text-lg font-bold text-primary-600 flex-shrink-0">{ticket.ticketNumber.split('-')[1]}</span>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm sm:text-base truncate">{ticket.patient.lastName} {ticket.patient.firstName}</p>
                           <span className={`text-xs px-2 py-0.5 rounded-full ${ticketService.getPriorityColor(ticket.priority)}`}>
                             {ticketService.getPriorityLabel(ticket.priority)}
                           </span>
                         </div>
                       </div>
-                      <span className="text-sm text-gray-500">#{ticket.queueEntry?.position || '-'}</span>
+                      <span className="text-xs sm:text-sm text-gray-500 flex-shrink-0">#{ticket.queueEntry?.position || '-'}</span>
                     </div>
                   ))
                 )}

@@ -9,7 +9,16 @@ import { validate } from '../middleware/validation.js';
 
 const router = Router();
 
-// Toutes les routes nécessitent une authentification
+/**
+ * GET /api/tickets/verify/:qrCode
+ * Route PUBLIQUE pour vérifier un ticket via QR code (sans authentification)
+ */
+router.get(
+  '/verify/:qrCode',
+  (req, res) => ticketController.verifyByQRCode(req, res)
+);
+
+// Routes authentifiées
 router.use(authenticate);
 
 /**

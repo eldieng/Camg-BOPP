@@ -194,6 +194,45 @@ export class TicketController {
       sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de l\'annulation du ticket', 500);
     }
   }
+
+  /**
+   * GET /api/tickets/verify/:qrCode
+   * Vérifier un ticket par QR code (route publique)
+   */
+  async verifyByQRCode(req: any, res: Response): Promise<void> {
+    try {
+      const ticket = await ticketService.findByQRCode(req.params.qrCode);
+
+      if (!ticket) {
+        sendError(res, ErrorCodes.NOT_FOUND, 'Ticket non trouvé ou invalide', 404);
+        return;
+      }
+
+      // Vérifier la validité (10 jours)
+      const ticketDate = new Date(ticket.createdAt);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - ticketDate.getTime()) / (1000 * 60 * 60 * 24));
+      const isValid = diffDays <= 10 && ticket.status !== 'CANCELLED';
+
+      sendSuccess(res, {
+        ticketNumber: ticket.ticketNumber,
+        patient: {
+          firstName: ticket.patient.firstName,
+          lastName: ticket.patient.lastName,
+        },
+        status: ticket.status,
+        priority: ticket.priority,
+        createdAt: ticket.createdAt,
+        isValid,
+        validUntil: new Date(ticketDate.getTime() + 10 * 24 * 60 * 60 * 1000),
+        currentStation: ticket.queueEntry?.station || null,
+        queuePosition: ticket.queueEntry?.position || null,
+      });
+    } catch (error) {
+      console.error('Erreur vérification QR:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la vérification du ticket', 500);
+    }
+  }
 }
 
 export const ticketController = new TicketController();

@@ -188,10 +188,15 @@ export class TicketService {
 
   /**
    * Générer l'image QR Code en base64
+   * Le QR code pointe vers l'URL de vérification du ticket
    */
   async generateQRCodeImage(qrCode: string): Promise<string> {
     try {
-      return await QRCode.toDataURL(qrCode, {
+      // URL de vérification du ticket (frontend)
+      const frontendUrl = process.env.FRONTEND_URL || 'https://camg-bopp.netlify.app';
+      const verifyUrl = `${frontendUrl}/ticket/${qrCode}`;
+      
+      return await QRCode.toDataURL(verifyUrl, {
         width: 200,
         margin: 2,
         color: {

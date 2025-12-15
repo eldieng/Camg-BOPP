@@ -16,6 +16,7 @@ import RendezVousPage from './pages/RendezVousPage';
 import LunettesPage from './pages/LunettesPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
 import ReportsPage from './pages/ReportsPage';
+import TicketVerifyPage from './pages/TicketVerifyPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/display" element={<DisplayPage />} />
+          <Route path="/ticket/:qrCode" element={<TicketVerifyPage />} />
 
           {/* Routes protégées */}
           <Route

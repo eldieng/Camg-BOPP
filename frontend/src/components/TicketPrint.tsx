@@ -23,11 +23,17 @@ const PRIORITY_LABELS: Record<string, string> = {
   EMERGENCY: 'Urgence',
 };
 
-// Composant pour impression thermique (80mm) - Design moderne
+// Composant pour impression thermique (58mm) - Design moderne
 const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, ref) => {
   const ticketDate = new Date(ticket.createdAt);
   const birthDate = new Date(ticket.patient.dateOfBirth);
   const age = new Date().getFullYear() - birthDate.getFullYear();
+  
+  // URL de base pour le QR code - utilise l'URL actuelle ou l'URL de production
+  const baseUrl = typeof window !== 'undefined' && window.location.origin 
+    ? window.location.origin 
+    : 'https://camg-bopp.netlify.app';
+  const qrCodeUrl = `${baseUrl}/ticket/${ticket.qrCode}`;
 
   const getPriorityStyle = () => {
     switch (ticket.priority) {
@@ -149,11 +155,11 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, re
         border: '1px solid #e2e8f0',
         borderRadius: '1mm'
       }}>
-        <QRCodeSVG
-          value={`${window.location.origin}/ticket/${ticket.qrCode}`}
-          size={60}
-          level="M"
-          includeMargin={false}
+        {/* Utiliser une API externe pour générer le QR code en image (fonctionne mieux à l'impression) */}
+        <img 
+          src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(qrCodeUrl)}`}
+          alt="QR Code"
+          style={{ width: '60px', height: '60px' }}
         />
         <div style={{ fontSize: '6px', marginTop: '1mm', color: '#94a3b8' }}>
           Scanner pour vérification

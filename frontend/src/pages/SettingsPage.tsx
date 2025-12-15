@@ -116,13 +116,13 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Administration</h1>
-        <div className="flex space-x-2">
-          <Button onClick={loadUsers} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Administration</h1>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button onClick={loadUsers} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} size="sm" className="w-full sm:w-auto">
             Actualiser
           </Button>
-          <Button onClick={() => { setShowForm(true); setEditingUser(null); setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'ACCUEIL' }); }} leftIcon={<Plus className="w-4 h-4" />}>
+          <Button onClick={() => { setShowForm(true); setEditingUser(null); setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'ACCUEIL' }); }} leftIcon={<Plus className="w-4 h-4" />} size="sm" className="w-full sm:w-auto">
             Nouvel utilisateur
           </Button>
         </div>
@@ -138,8 +138,8 @@ export default function SettingsPage() {
             <CardTitle>{editingUser ? 'Modifier utilisateur' : 'Nouvel utilisateur'}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <Input label="Prénom" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
                 <Input label="Nom" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
               </div>
@@ -156,11 +156,11 @@ export default function SettingsPage() {
                   <option value="ADMIN">Administrateur</option>
                 </select>
               </div>
-              <div className="flex space-x-2">
-                <Button type="submit" leftIcon={<Check className="w-4 h-4" />}>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button type="submit" leftIcon={<Check className="w-4 h-4" />} className="w-full sm:w-auto">
                   {editingUser ? 'Mettre à jour' : 'Créer'}
                 </Button>
-                <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setEditingUser(null); }} leftIcon={<X className="w-4 h-4" />}>
+                <Button type="button" variant="secondary" onClick={() => { setShowForm(false); setEditingUser(null); }} leftIcon={<X className="w-4 h-4" />} className="w-full sm:w-auto">
                   Annuler
                 </Button>
               </div>
@@ -172,21 +172,22 @@ export default function SettingsPage() {
       {/* Écran d'affichage public */}
       <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="p-3 bg-purple-100 rounded-xl">
-                <Monitor className="w-8 h-8 text-purple-600" />
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="p-2 sm:p-3 bg-purple-100 rounded-xl flex-shrink-0">
+                <Monitor className="w-6 h-6 sm:w-8 sm:h-8 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Écran d'affichage salle d'attente</h3>
-                <p className="text-sm text-gray-600">
-                  Affiche les numéros appelés sur un écran/TV dans la salle d'attente
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900">Écran d'affichage</h3>
+                <p className="text-xs sm:text-sm text-gray-600">
+                  Affiche les numéros appelés sur un écran/TV
                 </p>
               </div>
             </div>
             <Button
               onClick={() => window.open('/display', '_blank')}
               leftIcon={<ExternalLink className="w-4 h-4" />}
+              className="w-full sm:w-auto"
             >
               Ouvrir l'écran
             </Button>
@@ -212,7 +213,7 @@ export default function SettingsPage() {
             <div className="text-center py-8">Chargement...</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b">
                     <th className="text-left py-3">Nom</th>
@@ -242,7 +243,7 @@ export default function SettingsPage() {
                         {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('fr-FR') : '-'}
                       </td>
                       <td className="py-3 text-right">
-                        <div className="flex justify-end space-x-1">
+                        <div className="flex flex-wrap justify-end gap-1">
                           <Button size="sm" variant="ghost" onClick={() => handleEdit(user)} leftIcon={<Edit2 className="w-3 h-3" />} />
                           <Button size="sm" variant="ghost" onClick={() => setShowResetPassword(user.id)} leftIcon={<Key className="w-3 h-3" />} />
                           <Button size="sm" variant="ghost" onClick={() => handleToggleStatus(user)} leftIcon={<Power className="w-3 h-3" />} />

@@ -231,20 +231,22 @@ export default function DisplayPage() {
         : 'bg-gradient-to-br from-gray-100 via-white to-gray-100 text-gray-900'
     }`}>
       {!audioUnlocked && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <div className="mx-auto max-w-6xl px-6 pt-4">
-            <div className="flex items-center justify-between gap-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-900 shadow-lg">
-              <div>
-                <div className="font-semibold">Activer le son</div>
-                <div className="text-sm">Cliquez sur “Activer le son” une fois pour permettre les annonces vocales.</div>
-              </div>
-              <button
-                onClick={unlockAudio}
-                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold"
-              >
-                Activer le son
-              </button>
-            </div>
+        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+            <div className="text-6xl mb-4">🔊</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">Activer les annonces vocales</h2>
+            <p className="text-gray-600 mb-6">
+              Pour que les patients soient appelés vocalement, vous devez activer le son une seule fois.
+            </p>
+            <button
+              onClick={unlockAudio}
+              className="w-full px-6 py-4 rounded-xl bg-green-600 hover:bg-green-500 text-white font-bold text-xl transition-colors"
+            >
+              🔈 Activer le son
+            </button>
+            <p className="text-xs text-gray-400 mt-4">
+              Cette action est requise par les navigateurs pour des raisons de sécurité.
+            </p>
           </div>
         </div>
       )}

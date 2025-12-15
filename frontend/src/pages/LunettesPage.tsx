@@ -139,57 +139,59 @@ export default function LunettesPage() {
         </div>
       )}
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Glasses className="w-8 h-8 text-purple-600" />
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <Glasses className="w-6 sm:w-8 h-6 sm:h-8 text-purple-600" />
             Station Lunettes
           </h1>
-          <p className="text-gray-600">Remise et ajustement des lunettes</p>
+          <p className="text-sm sm:text-base text-gray-600">Remise et ajustement des lunettes</p>
         </div>
-        <Button onClick={loadQueue} variant="secondary">
+        <Button onClick={loadQueue} variant="secondary" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />
           Actualiser
         </Button>
       </div>
 
       {/* Statistiques */}
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-yellow-600">{stats?.waiting || 0}</div>
-            <div className="text-sm text-gray-500">En attente</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-yellow-600">{stats?.waiting || 0}</div>
+            <div className="text-xs sm:text-sm text-gray-500">En attente</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-blue-600">{stats?.inService || 0}</div>
-            <div className="text-sm text-gray-500">En service</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600">{stats?.inService || 0}</div>
+            <div className="text-xs sm:text-sm text-gray-500">En service</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-green-600">{stats?.completed || 0}</div>
-            <div className="text-sm text-gray-500">Terminés</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-green-600">{stats?.completed || 0}</div>
+            <div className="text-xs sm:text-sm text-gray-500">Terminés</div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="p-4 text-center">
-            <div className="text-3xl font-bold text-gray-600">{stats?.avgWaitTime || 0} min</div>
-            <div className="text-sm text-gray-500">Attente moy.</div>
+          <CardContent className="p-3 sm:p-4 text-center">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-600">{stats?.avgWaitTime || 0} min</div>
+            <div className="text-xs sm:text-sm text-gray-500">Attente moy.</div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* File d'attente */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>File d'attente ({waitingPatients.length})</CardTitle>
-            <Button onClick={handleCallNext} disabled={isLoading || waitingPatients.length === 0}>
-              <Phone className="w-4 h-4 mr-2" />
-              Appeler suivant
-            </Button>
+          <CardHeader>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+              <CardTitle className="text-base sm:text-lg">File d'attente ({waitingPatients.length})</CardTitle>
+              <Button onClick={handleCallNext} disabled={isLoading || waitingPatients.length === 0} size="sm" className="w-full sm:w-auto">
+                <Phone className="w-4 h-4 mr-2" />
+                Appeler suivant
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             {waitingPatients.length === 0 ? (
@@ -229,7 +231,7 @@ export default function LunettesPage() {
         </Card>
 
         {/* Patient en cours */}
-        <Card className="col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Patient en cours</CardTitle>
           </CardHeader>
@@ -238,16 +240,16 @@ export default function LunettesPage() {
               <div className="space-y-6">
                 {/* Infos patient */}
                 <div className="bg-purple-50 rounded-xl p-6">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 bg-purple-200 rounded-full flex items-center justify-center">
-                      <User className="w-8 h-8 text-purple-700" />
+                  <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-200 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="w-6 h-6 sm:w-8 sm:h-8 text-purple-700" />
                     </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-gray-900">
+                    <div className="min-w-0">
+                      <h3 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">
                         {currentPatient.ticket.patient.firstName} {currentPatient.ticket.patient.lastName}
                       </h3>
-                      <p className="text-gray-600">
-                        {calculateAge(currentPatient.ticket.patient.dateOfBirth)} ans • Ticket: {currentPatient.ticket.ticketNumber}
+                      <p className="text-sm sm:text-base text-gray-600">
+                        {calculateAge(currentPatient.ticket.patient.dateOfBirth)} ans • {currentPatient.ticket.ticketNumber}
                       </p>
                     </div>
                   </div>
@@ -296,20 +298,20 @@ export default function LunettesPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3">
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                   {currentPatient.status === 'CALLED' && (
                     <Button onClick={handleStartService} disabled={isLoading} className="flex-1">
                       <Clock className="w-4 h-4 mr-2" />
-                      Démarrer le service
+                      Démarrer
                     </Button>
                   )}
                   {currentPatient.status === 'IN_SERVICE' && (
                     <Button onClick={handleComplete} disabled={isLoading} variant="success" className="flex-1">
                       <CheckCircle className="w-4 h-4 mr-2" />
-                      Terminer (Lunettes remises)
+                      Terminer
                     </Button>
                   )}
-                  <Button onClick={handleNoShow} disabled={isLoading} variant="danger">
+                  <Button onClick={handleNoShow} disabled={isLoading} variant="danger" className="w-full sm:w-auto">
                     <AlertCircle className="w-4 h-4 mr-2" />
                     Absent
                   </Button>

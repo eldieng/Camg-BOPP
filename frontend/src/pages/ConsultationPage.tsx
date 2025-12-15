@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, Plus, Trash2, Download } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, CreateConsultationDto, CreatePrescriptionDto, PatientHistory } from '../services/consultation.service';
 import { visionTestService } from '../services/visionTest.service';
+import { reportService } from '../services/report.service';
 
 export default function ConsultationPage() {
   
@@ -183,6 +184,135 @@ export default function ConsultationPage() {
     }
   };
 
+  const downloadPatientPDF = async () => {
+    if (!currentPatient) return;
+    
+    try {
+      const report = await reportService.getPatientReport(currentPatient.ticket.patient.id);
+      
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) return;
+
+      const calculateAge = (dob: string) => {
+        const birth = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const m = today.getMonth() - birth.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+        return age;
+      };
+
+      const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Fiche Patient - ${report.patient.lastName} ${report.patient.firstName}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 40px; color: #333; max-width: 800px; margin: 0 auto; }
+            h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
+            h2 { color: #374151; margin-top: 30px; border-bottom: 1px solid #e5e7eb; padding-bottom: 5px; }
+            .patient-info { background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+            .patient-info p { margin: 5px 0; }
+            .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin-left: 10px; }
+            .badge-pregnant { background: #fce7f3; color: #be185d; }
+            .badge-disabled { background: #ede9fe; color: #7c3aed; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #e5e7eb; padding: 10px; text-align: left; }
+            th { background: #f9fafb; font-weight: 600; }
+            .section { margin: 20px 0; padding: 15px; background: #fafafa; border-radius: 8px; }
+            .footer { margin-top: 40px; text-align: center; color: #9ca3af; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 20px; }
+            @media print { body { padding: 20px; } }
+          </style>
+        </head>
+        <body>
+          <h1>Fiche Patient - CAMG-BOPP</h1>
+          
+          <div class="patient-info">
+            <h3 style="margin-top: 0;">${report.patient.lastName} ${report.patient.firstName}
+              ${report.patient.isPregnant ? '<span class="badge badge-pregnant">Enceinte</span>' : ''}
+              ${report.patient.isDisabled ? '<span class="badge badge-disabled">PMR</span>' : ''}
+            </h3>
+            <p><strong>Date de naissance:</strong> ${new Date(report.patient.dateOfBirth).toLocaleDateString('fr-FR')} (${calculateAge(report.patient.dateOfBirth)} ans)</p>
+            ${report.patient.phone ? '<p><strong>Téléphone:</strong> ' + report.patient.phone + '</p>' : ''}
+            ${report.patient.address ? '<p><strong>Adresse:</strong> ' + report.patient.address + '</p>' : ''}
+          </div>
+
+          ${report.visionTests.length > 0 ? `
+            <h2>Tests de Vue</h2>
+            ${report.visionTests.map(vt => `
+              <div class="section">
+                <p><strong>Date:</strong> ${new Date(vt.date).toLocaleDateString('fr-FR')} - <strong>Technicien:</strong> ${vt.technician}</p>
+                <table>
+                  <tr>
+                    <th></th>
+                    <th>Acuité</th>
+                    <th>Sphère</th>
+                    <th>Cylindre</th>
+                    <th>Axe</th>
+                    <th>Addition</th>
+                  </tr>
+                  <tr>
+                    <td><strong>OD</strong></td>
+                    <td>${vt.rightEye.acuity || '-'}</td>
+                    <td>${vt.rightEye.sphere ?? '-'}</td>
+                    <td>${vt.rightEye.cylinder ?? '-'}</td>
+                    <td>${vt.rightEye.axis ?? '-'}°</td>
+                    <td>${vt.rightEye.addition ?? '-'}</td>
+                  </tr>
+                  <tr>
+                    <td><strong>OG</strong></td>
+                    <td>${vt.leftEye.acuity || '-'}</td>
+                    <td>${vt.leftEye.sphere ?? '-'}</td>
+                    <td>${vt.leftEye.cylinder ?? '-'}</td>
+                    <td>${vt.leftEye.axis ?? '-'}°</td>
+                    <td>${vt.leftEye.addition ?? '-'}</td>
+                  </tr>
+                </table>
+                ${vt.pupillaryDistance ? '<p><strong>Écart pupillaire:</strong> ' + vt.pupillaryDistance + ' mm</p>' : ''}
+                ${vt.notes ? '<p><strong>Notes:</strong> ' + vt.notes + '</p>' : ''}
+              </div>
+            `).join('')}
+          ` : ''}
+
+          ${report.consultations.length > 0 ? `
+            <h2>Consultations</h2>
+            ${report.consultations.map(c => `
+              <div class="section">
+                <p><strong>Date:</strong> ${new Date(c.date).toLocaleDateString('fr-FR')} - <strong>Médecin:</strong> ${c.doctor}</p>
+                ${c.chiefComplaint ? '<p><strong>Motif:</strong> ' + c.chiefComplaint + '</p>' : ''}
+                ${c.diagnosis ? '<p><strong>Diagnostic:</strong> ' + c.diagnosis + '</p>' : ''}
+                ${c.intraocularPressureOD || c.intraocularPressureOG ? '<p><strong>PIO:</strong> OD: ' + (c.intraocularPressureOD || '-') + ' mmHg | OG: ' + (c.intraocularPressureOG || '-') + ' mmHg</p>' : ''}
+                ${c.notes ? '<p><strong>Notes:</strong> ' + c.notes + '</p>' : ''}
+                ${c.prescriptions.length > 0 ? `
+                  <p><strong>Prescriptions:</strong></p>
+                  <ul>
+                    ${c.prescriptions.map(p => `
+                      <li>${p.medication || 'Correction optique'} ${p.eyeType} ${p.dosage ? '- ' + p.dosage : ''} ${p.duration ? '(' + p.duration + ')' : ''}</li>
+                    `).join('')}
+                  </ul>
+                ` : ''}
+              </div>
+            `).join('')}
+          ` : ''}
+
+          <div class="footer">
+            <p>Document généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}</p>
+            <p>CAMG-BOPP - Dispensaire Ophtalmologique</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+      printWindow.onload = () => {
+        printWindow.print();
+      };
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors du téléchargement');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -300,12 +430,16 @@ export default function ConsultationPage() {
                   {currentPatient ? `${currentPatient.ticket.patient.lastName} ${currentPatient.ticket.patient.firstName}` : 'Sélectionnez un patient'}
                 </CardTitle>
                 {currentPatient && (
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 items-center">
                     <button onClick={() => setActiveTab('consultation')} className={`px-3 py-1 rounded ${activeTab === 'consultation' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}>
                       Consultation
                     </button>
                     <button onClick={() => setActiveTab('history')} className={`px-3 py-1 rounded ${activeTab === 'history' ? 'bg-blue-100 text-blue-700' : 'text-gray-600'}`}>
                       Historique
+                    </button>
+                    <button onClick={downloadPatientPDF} className="px-3 py-1 rounded bg-green-100 text-green-700 hover:bg-green-200 flex items-center gap-1" title="Télécharger fiche patient">
+                      <Download className="w-4 h-4" />
+                      PDF
                     </button>
                   </div>
                 )}

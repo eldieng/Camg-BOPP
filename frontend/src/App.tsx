@@ -14,6 +14,7 @@ import DisplayPage from './pages/DisplayPage';
 import RendezVousPage from './pages/RendezVousPage';
 import LunettesPage from './pages/LunettesPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
+import ReportsPage from './pages/ReportsPage';
 
 function App() {
   return (
@@ -81,6 +82,13 @@ function App() {
             <Route path="lunettes" element={
               <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
                 <LunettesPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Module Rapports */}
+            <Route path="reports" element={
+              <ProtectedRoute allowedRoles={['ADMIN']}>
+                <ReportsPage />
               </ProtectedRoute>
             } />
           </Route>

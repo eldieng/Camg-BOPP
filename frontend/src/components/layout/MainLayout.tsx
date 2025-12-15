@@ -75,6 +75,12 @@ const navItems: NavItem[] = [
     roles: ['ADMIN'],
   },
   {
+    label: 'Rapports',
+    path: '/reports',
+    icon: <BarChart3 className="w-5 h-5" />,
+    roles: ['ADMIN'],
+  },
+  {
     label: 'Paramètres',
     path: '/settings',
     icon: <Settings className="w-5 h-5" />,

@@ -8,6 +8,7 @@ import consultationRoutes from './consultation.routes.js';
 import statsRoutes from './stats.routes.js';
 import adminRoutes from './admin.routes.js';
 import appointmentRoutes from './appointment.routes.js';
+import reportRoutes from './report.routes.js';
 
 const router = Router();
 
@@ -37,6 +38,9 @@ router.use('/admin', adminRoutes);
 
 // Routes rendez-vous
 router.use('/appointments', appointmentRoutes);
+
+// Routes rapports
+router.use('/reports', reportRoutes);
 
 // Route de santé
 router.get('/health', (_req, res) => {

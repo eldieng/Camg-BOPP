@@ -254,7 +254,7 @@ export default function AccueilPage() {
             <CardContent className="text-center">
               <div className="text-4xl sm:text-6xl font-bold text-primary-600 mb-4">{createdTicket.ticketNumber}</div>
               {/* QR Code généré côté frontend avec l'URL de vérification */}
-              <div className="mx-auto mb-4">
+              <div className="flex justify-center mb-4">
                 <QRCodeSVG
                   value={`${window.location.origin}/ticket/${createdTicket.qrCode}`}
                   size={150}

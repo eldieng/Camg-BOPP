@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 
 interface TicketPrintProps {
   ticket: {
@@ -154,11 +155,11 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, re
         border: '1px solid #e2e8f0',
         borderRadius: '1mm'
       }}>
-        {/* Utiliser une API externe pour générer le QR code en image (fonctionne mieux à l'impression) */}
-        <img 
-          src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent(qrCodeUrl)}`}
-          alt="QR Code"
-          style={{ width: '60px', height: '60px' }}
+        <QRCodeSVG
+          value={qrCodeUrl}
+          size={60}
+          level="M"
+          includeMargin={false}
         />
         <div style={{ fontSize: '6px', marginTop: '1mm', color: '#94a3b8' }}>
           Scanner pour vérification

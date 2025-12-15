@@ -275,8 +275,19 @@ export default function AccueilPage() {
                   onClick={() => {
                     const printWindow = window.open('', '_blank');
                     if (printWindow && ticketPrintRef.current) {
+                      // Convertir le canvas QR code en image base64
+                      const canvas = ticketPrintRef.current.querySelector('canvas');
+                      let htmlContent = ticketPrintRef.current.innerHTML;
+                      
+                      if (canvas) {
+                        const qrImageBase64 = canvas.toDataURL('image/png');
+                        // Remplacer le canvas par une image
+                        const canvasHtml = canvas.outerHTML;
+                        htmlContent = htmlContent.replace(canvasHtml, `<img src="${qrImageBase64}" style="width:60px;height:60px;" />`);
+                      }
+                      
                       printWindow.document.write('<html><head><title>Ticket CAMG-BOPP</title></head><body>');
-                      printWindow.document.write(ticketPrintRef.current.innerHTML);
+                      printWindow.document.write(htmlContent);
                       printWindow.document.write('</body></html>');
                       printWindow.document.close();
                       printWindow.print();

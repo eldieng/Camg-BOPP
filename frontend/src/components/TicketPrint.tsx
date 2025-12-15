@@ -1,5 +1,5 @@
 import { forwardRef } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 
 interface TicketPrintProps {
   ticket: {
@@ -155,7 +155,7 @@ const TicketPrint = forwardRef<HTMLDivElement, TicketPrintProps>(({ ticket }, re
         border: '1px solid #e2e8f0',
         borderRadius: '1mm'
       }}>
-        <QRCodeSVG
+        <QRCodeCanvas
           value={qrCodeUrl}
           size={60}
           level="M"

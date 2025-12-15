@@ -7,6 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import AccueilPage from './pages/AccueilPage';
 import TestVuePage from './pages/TestVuePage';
 import ConsultationPage from './pages/ConsultationPage';
+import ConsultationRoomPage from './pages/ConsultationRoomPage';
 import StatsPage from './pages/StatsPage';
 import SettingsPage from './pages/SettingsPage';
 import PatientsPage from './pages/PatientsPage';
@@ -54,6 +55,11 @@ function App() {
             <Route path="consultation" element={
               <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
                 <ConsultationPage />
+              </ProtectedRoute>
+            } />
+            <Route path="consultation/salle/:roomNumber" element={
+              <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
+                <ConsultationRoomPage />
               </ProtectedRoute>
             } />
             

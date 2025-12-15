@@ -343,6 +343,47 @@ export default function ConsultationPage() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* Résultats du test de vue (lecture seule) */}
+                  {patientHistory?.visionTests && patientHistory.visionTests.length > 0 && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-800 mb-3 flex items-center">
+                        <span className="mr-2">👁️</span> Résultats du Test de Vue
+                      </h4>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="bg-white rounded p-3">
+                          <p className="font-medium text-gray-700 mb-2">Œil Droit (OD)</p>
+                          <div className="space-y-1 text-gray-600">
+                            <p>Acuité: <span className="font-semibold text-gray-900">{patientHistory.visionTests[0].rightEye_acuity || '-'}</span></p>
+                            <p>Sphère: <span className="font-semibold">{patientHistory.visionTests[0].rightEye_sphere ?? '-'}</span></p>
+                            <p>Cylindre: <span className="font-semibold">{patientHistory.visionTests[0].rightEye_cylinder ?? '-'}</span></p>
+                            <p>Axe: <span className="font-semibold">{patientHistory.visionTests[0].rightEye_axis ?? '-'}°</span></p>
+                            <p>Addition: <span className="font-semibold">{patientHistory.visionTests[0].rightEye_addition ?? '-'}</span></p>
+                          </div>
+                        </div>
+                        <div className="bg-white rounded p-3">
+                          <p className="font-medium text-gray-700 mb-2">Œil Gauche (OG)</p>
+                          <div className="space-y-1 text-gray-600">
+                            <p>Acuité: <span className="font-semibold text-gray-900">{patientHistory.visionTests[0].leftEye_acuity || '-'}</span></p>
+                            <p>Sphère: <span className="font-semibold">{patientHistory.visionTests[0].leftEye_sphere ?? '-'}</span></p>
+                            <p>Cylindre: <span className="font-semibold">{patientHistory.visionTests[0].leftEye_cylinder ?? '-'}</span></p>
+                            <p>Axe: <span className="font-semibold">{patientHistory.visionTests[0].leftEye_axis ?? '-'}°</span></p>
+                            <p>Addition: <span className="font-semibold">{patientHistory.visionTests[0].leftEye_addition ?? '-'}</span></p>
+                          </div>
+                        </div>
+                      </div>
+                      {patientHistory.visionTests[0].pupillaryDistance && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Écart pupillaire: <span className="font-semibold">{patientHistory.visionTests[0].pupillaryDistance} mm</span>
+                        </p>
+                      )}
+                      {patientHistory.visionTests[0].notes && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          Notes technicien: <span className="italic">{patientHistory.visionTests[0].notes}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-2 gap-4">
                     <Input type="number" step="0.1" label="PIO OD (mmHg)" value={formData.intraocularPressureOD ?? ''} onChange={(e) => setFormData({ ...formData, intraocularPressureOD: e.target.value ? parseFloat(e.target.value) : undefined })} />
                     <Input type="number" step="0.1" label="PIO OG (mmHg)" value={formData.intraocularPressureOG ?? ''} onChange={(e) => setFormData({ ...formData, intraocularPressureOG: e.target.value ? parseFloat(e.target.value) : undefined })} />

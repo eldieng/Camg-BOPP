@@ -168,26 +168,26 @@ export class ReportService {
       }),
       // Daily patients
       prisma.$queryRaw<{ date: string; count: bigint }[]>`
-        SELECT DATE(created_at) as date, COUNT(*) as count 
+        SELECT DATE("createdAt") as date, COUNT(*) as count 
         FROM patients 
-        WHERE created_at >= ${startDate} AND created_at <= ${endDate}
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY DATE("createdAt")
         ORDER BY date
       `,
       // Daily consultations
       prisma.$queryRaw<{ date: string; count: bigint }[]>`
-        SELECT DATE(created_at) as date, COUNT(*) as count 
+        SELECT DATE("createdAt") as date, COUNT(*) as count 
         FROM consultations 
-        WHERE created_at >= ${startDate} AND created_at <= ${endDate}
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY DATE("createdAt")
         ORDER BY date
       `,
       // Daily vision tests
       prisma.$queryRaw<{ date: string; count: bigint }[]>`
-        SELECT DATE(created_at) as date, COUNT(*) as count 
+        SELECT DATE("createdAt") as date, COUNT(*) as count 
         FROM vision_tests 
-        WHERE created_at >= ${startDate} AND created_at <= ${endDate}
-        GROUP BY DATE(created_at)
+        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY DATE("createdAt")
         ORDER BY date
       `,
     ]);

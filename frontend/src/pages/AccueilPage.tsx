@@ -4,6 +4,7 @@ import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../comp
 import { patientService, Patient, CreatePatientDto } from '../services/patient.service';
 import { ticketService, Ticket as TicketType, TicketsSummary } from '../services/ticket.service';
 import TicketPrint from '../components/TicketPrint';
+import { QRCodeSVG } from 'qrcode.react';
 
 export default function AccueilPage() {
   const [activeTab, setActiveTab] = useState<'new' | 'search'>('new');
@@ -252,7 +253,14 @@ export default function AccueilPage() {
             </CardHeader>
             <CardContent className="text-center">
               <div className="text-4xl sm:text-6xl font-bold text-primary-600 mb-4">{createdTicket.ticketNumber}</div>
-              {createdTicket.qrCodeImage && <img src={createdTicket.qrCodeImage} alt="QR Code" className="mx-auto mb-4" />}
+              {/* QR Code généré côté frontend avec l'URL de vérification */}
+              <div className="mx-auto mb-4">
+                <QRCodeSVG
+                  value={`${window.location.origin}/ticket/${createdTicket.qrCode}`}
+                  size={150}
+                  level="M"
+                />
+              </div>
               <p className="text-lg mb-2">{createdTicket.patient.lastName} {createdTicket.patient.firstName}</p>
               <span className={`inline-block px-3 py-1 rounded-full text-sm ${ticketService.getPriorityColor(createdTicket.priority)}`}>
                 {ticketService.getPriorityLabel(createdTicket.priority)}

@@ -83,7 +83,7 @@ export class StatsService {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-    const stations = ['ACCUEIL', 'TEST_VUE', 'CONSULTATION', 'LUNETTES'] as const;
+    const stations = ['ACCUEIL', 'TEST_VUE', 'CONSULTATION_1', 'CONSULTATION_2', 'LUNETTES'] as const;
     const stats: StationStatsData[] = [];
 
     for (const station of stations) {

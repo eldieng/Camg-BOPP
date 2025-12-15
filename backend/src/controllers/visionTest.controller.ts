@@ -38,9 +38,10 @@ export class VisionTestController {
         technicianId,
       });
 
-      // Si une entrée de file est fournie, terminer et transférer vers consultation
+      // Si une entrée de file est fournie, terminer et transférer vers la consultation la moins chargée
       if (queueEntryId) {
-        await queueService.completeService(queueEntryId, Station.CONSULTATION);
+        const leastBusyConsultation = await queueService.getLeastBusyConsultation();
+        await queueService.completeService(queueEntryId, leastBusyConsultation);
       }
 
       sendSuccess(res, visionTest, 201, 'Test de vue enregistré');

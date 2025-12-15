@@ -45,7 +45,8 @@ enum Priority {
 enum Station {
   ACCUEIL
   TEST_VUE
-  CONSULTATION
+  CONSULTATION_1
+  CONSULTATION_2
   LUNETTES
 }
 

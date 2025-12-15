@@ -57,8 +57,14 @@ const navItems: NavItem[] = [
     roles: ['TEST_VUE', 'ADMIN'],
   },
   {
-    label: 'Consultation',
-    path: '/consultation',
+    label: 'Consultation 1',
+    path: '/consultation/1',
+    icon: <Stethoscope className="w-5 h-5" />,
+    roles: ['MEDECIN', 'ADMIN'],
+  },
+  {
+    label: 'Consultation 2',
+    path: '/consultation/2',
     icon: <Stethoscope className="w-5 h-5" />,
     roles: ['MEDECIN', 'ADMIN'],
   },

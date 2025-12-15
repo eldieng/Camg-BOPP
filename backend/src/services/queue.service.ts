@@ -1,5 +1,14 @@
 import prisma from '../lib/prisma.js';
-import { Station, QueueStatus, QueueEntry, TicketStatus } from '@prisma/client';
+import { Station, QueueStatus, QueueEntry, TicketStatus, Priority } from '@prisma/client';
+
+// Ordre de priorité (plus petit = plus prioritaire)
+const PRIORITY_ORDER: Record<Priority, number> = {
+  EMERGENCY: 1,
+  DISABLED: 2,
+  PREGNANT: 3,
+  ELDERLY: 4,
+  NORMAL: 5,
+};
 
 export interface QueueEntryWithDetails extends QueueEntry {
   ticket: {
@@ -32,7 +41,7 @@ export class QueueService {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-    return prisma.queueEntry.findMany({
+    const entries = await prisma.queueEntry.findMany({
       where: {
         station,
         createdAt: { gte: startOfDay },
@@ -52,12 +61,19 @@ export class QueueService {
           },
         },
       },
-      orderBy: [
-        { status: 'asc' }, // IN_SERVICE first, then CALLED, then WAITING
-        { ticket: { priority: 'asc' } },
-        { position: 'asc' },
-      ],
-    }) as Promise<QueueEntryWithDetails[]>;
+    });
+
+    // Tri personnalisé: statut (IN_SERVICE > CALLED > WAITING), puis priorité, puis position
+    const statusOrder: Record<QueueStatus, number> = { IN_SERVICE: 1, CALLED: 2, WAITING: 3, COMPLETED: 4, SKIPPED: 5 };
+    entries.sort((a, b) => {
+      if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
+      const priorityA = PRIORITY_ORDER[a.ticket.priority as Priority] || 5;
+      const priorityB = PRIORITY_ORDER[b.ticket.priority as Priority] || 5;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return a.position - b.position;
+    });
+
+    return entries as QueueEntryWithDetails[];
   }
 
   /**
@@ -67,17 +83,13 @@ export class QueueService {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
-    // Trouver le prochain en attente
-    const nextEntry = await prisma.queueEntry.findFirst({
+    // Trouver tous les patients en attente et trier par priorité
+    const waitingEntries = await prisma.queueEntry.findMany({
       where: {
         station,
         status: 'WAITING',
         createdAt: { gte: startOfDay },
       },
-      orderBy: [
-        { ticket: { priority: 'asc' } },
-        { position: 'asc' },
-      ],
       include: {
         ticket: {
           include: {
@@ -93,6 +105,16 @@ export class QueueService {
         },
       },
     });
+
+    // Trier par priorité puis par position
+    waitingEntries.sort((a, b) => {
+      const priorityA = PRIORITY_ORDER[a.ticket.priority as Priority] || 5;
+      const priorityB = PRIORITY_ORDER[b.ticket.priority as Priority] || 5;
+      if (priorityA !== priorityB) return priorityA - priorityB;
+      return a.position - b.position;
+    });
+
+    const nextEntry = waitingEntries[0] || null;
 
     if (!nextEntry) return null;
 
@@ -267,6 +289,26 @@ export class QueueService {
     });
 
     return count + 1;
+  }
+
+  /**
+   * Trouver la salle de consultation la moins chargée
+   */
+  async getLeastBusyConsultation(): Promise<Station> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+
+    const [waiting1, waiting2] = await Promise.all([
+      prisma.queueEntry.count({
+        where: { station: 'CONSULTATION_1' as Station, status: 'WAITING', createdAt: { gte: startOfDay } },
+      }),
+      prisma.queueEntry.count({
+        where: { station: 'CONSULTATION_2' as Station, status: 'WAITING', createdAt: { gte: startOfDay } },
+      }),
+    ]);
+
+    // Retourner la salle avec le moins de patients en attente
+    return waiting1 <= waiting2 ? 'CONSULTATION_1' as Station : 'CONSULTATION_2' as Station;
   }
 
   /**

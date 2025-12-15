@@ -181,7 +181,14 @@ export default function TestVuePage() {
           <CardHeader>
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
               <CardTitle className="text-base sm:text-lg">File d'attente ({queue.filter(e => e.status === 'WAITING').length})</CardTitle>
-              <Button onClick={handleCallNext} isLoading={isLoading} leftIcon={<Phone className="w-4 h-4" />} size="sm" className="w-full sm:w-auto">
+              <Button 
+                onClick={handleCallNext} 
+                isLoading={isLoading} 
+                leftIcon={<Phone className="w-4 h-4" />} 
+                size="sm" 
+                className="w-full sm:w-auto"
+                disabled={queue.some(e => e.status === 'CALLED' || e.status === 'IN_SERVICE')}
+              >
                 Appeler suivant
               </Button>
             </div>

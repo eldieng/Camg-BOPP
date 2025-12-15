@@ -20,19 +20,22 @@ interface Announcement {
 
 const STATION_LABELS: Record<string, string> = {
   TEST_VUE: 'Test de Vue',
-  CONSULTATION: 'Consultation',
+  CONSULTATION_1: 'Consultation 1',
+  CONSULTATION_2: 'Consultation 2',
   LUNETTES: 'Salle des Lunettes',
 };
 
 const STATION_VOICE_LABELS: Record<string, string> = {
   TEST_VUE: 'salle de Test de Vue',
-  CONSULTATION: 'salle de Consultation',
+  CONSULTATION_1: 'salle de Consultation numéro 1',
+  CONSULTATION_2: 'salle de Consultation numéro 2',
   LUNETTES: 'salle des Lunettes',
 };
 
 const STATION_COLORS: Record<string, string> = {
   TEST_VUE: 'from-blue-500 to-blue-600',
-  CONSULTATION: 'from-green-500 to-green-600',
+  CONSULTATION_1: 'from-green-500 to-green-600',
+  CONSULTATION_2: 'from-teal-500 to-teal-600',
   LUNETTES: 'from-purple-500 to-purple-600',
 };
 
@@ -106,7 +109,7 @@ export default function DisplayPage() {
   // Charger les données des files d'attente
   const loadQueues = async () => {
     try {
-      const stations = ['TEST_VUE', 'CONSULTATION', 'LUNETTES'];
+      const stations = ['TEST_VUE', 'CONSULTATION_1', 'CONSULTATION_2', 'LUNETTES'];
       const queueData: QueueDisplay[] = [];
 
       for (const station of stations) {

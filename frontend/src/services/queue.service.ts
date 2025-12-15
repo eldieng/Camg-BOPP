@@ -1,7 +1,7 @@
 import api from './api';
 import { ApiResponse } from '../types';
 
-export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION' | 'LUNETTES';
+export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION_1' | 'CONSULTATION_2' | 'LUNETTES';
 export type QueueStatus = 'WAITING' | 'CALLED' | 'IN_SERVICE' | 'COMPLETED' | 'SKIPPED';
 
 export interface QueueEntry {

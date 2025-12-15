@@ -7,7 +7,7 @@ import { Station } from '@prisma/client';
 
 export const stationValidation = [
   param('station')
-    .isIn(['ACCUEIL', 'TEST_VUE', 'CONSULTATION', 'LUNETTES'])
+    .isIn(['ACCUEIL', 'TEST_VUE', 'CONSULTATION_1', 'CONSULTATION_2', 'LUNETTES'])
     .withMessage('Station invalide'),
 ];
 
@@ -19,7 +19,7 @@ export const completeServiceValidation = [
   param('entryId').isUUID().withMessage('ID entrée invalide'),
   body('nextStation')
     .optional()
-    .isIn(['ACCUEIL', 'TEST_VUE', 'CONSULTATION', 'LUNETTES'])
+    .isIn(['ACCUEIL', 'TEST_VUE', 'CONSULTATION_1', 'CONSULTATION_2', 'LUNETTES'])
     .withMessage('Station invalide'),
 ];
 

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { Stethoscope, Phone, Play, Check, X, UserX, RefreshCw, Plus, Trash2 } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
@@ -6,6 +7,10 @@ import { consultationService, CreateConsultationDto, CreatePrescriptionDto, Pati
 import { visionTestService } from '../services/visionTest.service';
 
 export default function ConsultationPage() {
+  const { roomNumber } = useParams<{ roomNumber: string }>();
+  const station = roomNumber === '2' ? 'CONSULTATION_2' : 'CONSULTATION_1';
+  const roomLabel = roomNumber === '2' ? 'Salle 2' : 'Salle 1';
+  
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [stats, setStats] = useState<StationStats | null>(null);
   const [currentPatient, setCurrentPatient] = useState<QueueEntry | null>(null);
@@ -29,7 +34,7 @@ export default function ConsultationPage() {
   const loadQueue = async () => {
     try {
       setError('');
-      const data = await queueService.getQueue('CONSULTATION');
+      const data = await queueService.getQueue(station);
       setQueue(data.queue);
       setStats(data.stats);
       
@@ -70,7 +75,7 @@ export default function ConsultationPage() {
     setError('');
     setIsLoading(true);
     try {
-      const entry = await queueService.callNext('CONSULTATION');
+      const entry = await queueService.callNext(station);
       if (entry) {
         setSuccess(`Patient ${entry.ticket.patient.lastName} appelé`);
         setTimeout(() => setSuccess(''), 3000);
@@ -185,7 +190,7 @@ export default function ConsultationPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Consultation Médicale</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Consultation - {roomLabel}</h1>
         <Button onClick={loadQueue} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
           Actualiser
         </Button>
@@ -222,7 +227,13 @@ export default function ConsultationPage() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>File ({queue.filter(e => e.status === 'WAITING').length})</CardTitle>
-              <Button onClick={handleCallNext} isLoading={isLoading} leftIcon={<Phone className="w-4 h-4" />} size="sm">
+              <Button 
+                onClick={handleCallNext} 
+                isLoading={isLoading} 
+                leftIcon={<Phone className="w-4 h-4" />} 
+                size="sm"
+                disabled={queue.some(e => e.status === 'CALLED' || e.status === 'IN_SERVICE')}
+              >
                 Suivant
               </Button>
             </div>

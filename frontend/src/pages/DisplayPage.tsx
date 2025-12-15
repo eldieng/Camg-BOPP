@@ -9,6 +9,9 @@ interface QueueDisplay {
   currentRoomNumber: number | null;
   waitingCount: number;
   nextNumbers: string[];
+  // Pour consultation: patients des 2 salles
+  room1?: { number: string; patient: string; status: string } | null;
+  room2?: { number: string; patient: string; status: string } | null;
 }
 
 interface Announcement {
@@ -121,39 +124,94 @@ export default function DisplayPage() {
             if (data.success && data.data) {
               const { queue, stats } = data.data;
               
-              // Trouver le patient appelé ou en service (priorité à CALLED pour l'annonce)
-              const called = queue.find((q: any) => q.status === 'CALLED');
-              const inService = called || queue.find((q: any) => q.status === 'IN_SERVICE');
+              // Trouver les patients appelés ou en service
               const waiting = queue.filter((q: any) => q.status === 'WAITING');
               
-              queueData.push({
-                station,
-                stationLabel: STATION_LABELS[station],
-                currentNumber: inService?.ticket?.ticketNumber || null,
-                currentPatient: inService ? `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}` : null,
-                currentRoomNumber: inService?.roomNumber || null,
-                waitingCount: stats.waiting,
-                nextNumbers: waiting.slice(0, 5).map((q: any) => q.ticket.ticketNumber),
-              });
-
-              // Vérifier s'il y a un nouveau patient en cours (changement)
-              const previousPatient = previousQueuesRef.current.get(station);
-              const currentPatient = inService?.ticket?.ticketNumber || null;
-              
-              if (currentPatient && currentPatient !== previousPatient) {
-                // Nouveau patient détecté - déclencher l'annonce
-                triggerAnnouncement({
-                  ticketNumber: inService.ticket.ticketNumber,
+              // Pour la consultation, gérer les 2 salles séparément
+              if (station === 'CONSULTATION') {
+                const room1Patient = queue.find((q: any) => (q.status === 'CALLED' || q.status === 'IN_SERVICE') && q.roomNumber === 1);
+                const room2Patient = queue.find((q: any) => (q.status === 'CALLED' || q.status === 'IN_SERVICE') && q.roomNumber === 2);
+                
+                queueData.push({
                   station,
                   stationLabel: STATION_LABELS[station],
-                  patientName: `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}`,
-                  roomNumber: inService.roomNumber || null,
-                  timestamp: Date.now(),
+                  currentNumber: null,
+                  currentPatient: null,
+                  currentRoomNumber: null,
+                  waitingCount: stats.waiting,
+                  nextNumbers: waiting.slice(0, 5).map((q: any) => q.ticket.ticketNumber),
+                  room1: room1Patient ? {
+                    number: room1Patient.ticket.ticketNumber,
+                    patient: `${room1Patient.ticket.patient.firstName} ${room1Patient.ticket.patient.lastName}`,
+                    status: room1Patient.status
+                  } : null,
+                  room2: room2Patient ? {
+                    number: room2Patient.ticket.ticketNumber,
+                    patient: `${room2Patient.ticket.patient.firstName} ${room2Patient.ticket.patient.lastName}`,
+                    status: room2Patient.status
+                  } : null,
                 });
+
+                // Vérifier les changements pour chaque salle
+                const prevRoom1 = previousQueuesRef.current.get(`${station}_room1`);
+                const prevRoom2 = previousQueuesRef.current.get(`${station}_room2`);
+                const currRoom1 = room1Patient?.ticket?.ticketNumber || null;
+                const currRoom2 = room2Patient?.ticket?.ticketNumber || null;
+
+                if (currRoom1 && currRoom1 !== prevRoom1) {
+                  triggerAnnouncement({
+                    ticketNumber: room1Patient.ticket.ticketNumber,
+                    station,
+                    stationLabel: STATION_LABELS[station],
+                    patientName: `${room1Patient.ticket.patient.firstName} ${room1Patient.ticket.patient.lastName}`,
+                    roomNumber: 1,
+                    timestamp: Date.now(),
+                  });
+                }
+                if (currRoom2 && currRoom2 !== prevRoom2) {
+                  triggerAnnouncement({
+                    ticketNumber: room2Patient.ticket.ticketNumber,
+                    station,
+                    stationLabel: STATION_LABELS[station],
+                    patientName: `${room2Patient.ticket.patient.firstName} ${room2Patient.ticket.patient.lastName}`,
+                    roomNumber: 2,
+                    timestamp: Date.now(),
+                  });
+                }
+
+                previousQueuesRef.current.set(`${station}_room1`, currRoom1);
+                previousQueuesRef.current.set(`${station}_room2`, currRoom2);
+              } else {
+                // Autres stations: comportement normal
+                const called = queue.find((q: any) => q.status === 'CALLED');
+                const inService = called || queue.find((q: any) => q.status === 'IN_SERVICE');
+                
+                queueData.push({
+                  station,
+                  stationLabel: STATION_LABELS[station],
+                  currentNumber: inService?.ticket?.ticketNumber || null,
+                  currentPatient: inService ? `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}` : null,
+                  currentRoomNumber: inService?.roomNumber || null,
+                  waitingCount: stats.waiting,
+                  nextNumbers: waiting.slice(0, 5).map((q: any) => q.ticket.ticketNumber),
+                });
+
+                const previousPatient = previousQueuesRef.current.get(station);
+                const currentPatient = inService?.ticket?.ticketNumber || null;
+                
+                if (currentPatient && currentPatient !== previousPatient) {
+                  triggerAnnouncement({
+                    ticketNumber: inService.ticket.ticketNumber,
+                    station,
+                    stationLabel: STATION_LABELS[station],
+                    patientName: `${inService.ticket.patient.firstName} ${inService.ticket.patient.lastName}`,
+                    roomNumber: inService.roomNumber || null,
+                    timestamp: Date.now(),
+                  });
+                }
+                
+                previousQueuesRef.current.set(station, currentPatient);
               }
-              
-              // Mettre à jour le tracking
-              previousQueuesRef.current.set(station, currentPatient);
             }
           }
         } catch (err) {
@@ -359,22 +417,56 @@ export default function DisplayPage() {
               <p className="text-white/70">{queue.waitingCount} en attente</p>
             </div>
 
-            {/* Numéro actuel */}
-            <div className="bg-white/20 backdrop-blur rounded-xl p-6 mb-6">
-              <div className="text-center">
-                <p className="text-sm uppercase tracking-wider text-white/70 mb-2">En cours</p>
-                {queue.currentNumber ? (
-                  <>
-                    <div className="text-6xl font-bold mb-2">
-                      {queue.currentNumber.split('-').pop()}
-                    </div>
-                    <div className="text-lg text-white/90">{queue.currentPatient}</div>
-                  </>
-                ) : (
-                  <div className="text-3xl text-white/50">—</div>
-                )}
+            {/* Pour Consultation: afficher les 2 salles */}
+            {queue.station === 'CONSULTATION' ? (
+              <div className="space-y-4 mb-6">
+                {/* Salle 1 */}
+                <div className="bg-white/20 backdrop-blur rounded-xl p-4">
+                  <div className="text-center">
+                    <p className="text-sm uppercase tracking-wider text-white/70 mb-2">🚪 Salle 1</p>
+                    {queue.room1 ? (
+                      <>
+                        <div className="text-4xl font-bold mb-1">{queue.room1.number.split('-').pop()}</div>
+                        <div className="text-sm text-white/90">{queue.room1.patient}</div>
+                      </>
+                    ) : (
+                      <div className="text-2xl text-white/50">Libre</div>
+                    )}
+                  </div>
+                </div>
+                {/* Salle 2 */}
+                <div className="bg-white/20 backdrop-blur rounded-xl p-4">
+                  <div className="text-center">
+                    <p className="text-sm uppercase tracking-wider text-white/70 mb-2">🚪 Salle 2</p>
+                    {queue.room2 ? (
+                      <>
+                        <div className="text-4xl font-bold mb-1">{queue.room2.number.split('-').pop()}</div>
+                        <div className="text-sm text-white/90">{queue.room2.patient}</div>
+                      </>
+                    ) : (
+                      <div className="text-2xl text-white/50">Libre</div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Autres stations: affichage normal */
+              <div className="bg-white/20 backdrop-blur rounded-xl p-6 mb-6">
+                <div className="text-center">
+                  <p className="text-sm uppercase tracking-wider text-white/70 mb-2">En cours</p>
+                  {queue.currentNumber ? (
+                    <>
+                      <div className="text-6xl font-bold mb-2">
+                        {queue.currentNumber.split('-').pop()}
+                      </div>
+                      <div className="text-lg text-white/90">{queue.currentPatient}</div>
+                    </>
+                  ) : (
+                    <div className="text-3xl text-white/50">—</div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Prochains numéros */}
             <div>

@@ -101,6 +101,7 @@ export class AuthService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         lastLogin: true,
         createdAt: true,
       },

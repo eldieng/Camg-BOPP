@@ -43,13 +43,15 @@ export class QueueController {
   /**
    * POST /api/queue/:station/call-next
    * Appeler le prochain patient
+   * Body: { roomNumber?: number } - Numéro de salle spécifique pour CONSULTATION
    */
   async callNext(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const station = req.params.station as Station;
       const userId = req.user!.id;
+      const roomNumber = req.body.roomNumber as number | undefined;
       
-      const entry = await queueService.callNext(station, userId);
+      const entry = await queueService.callNext(station, userId, roomNumber);
       
       if (!entry) {
         sendSuccess(res, null, 200, 'Aucun patient en attente');

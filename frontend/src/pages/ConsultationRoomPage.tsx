@@ -70,13 +70,14 @@ export default function ConsultationRoomPage() {
     setError('');
     setIsLoading(true);
     try {
-      const entry = await queueService.callNext('CONSULTATION');
+      // Passer le numéro de salle pour que le patient soit assigné à cette salle spécifique
+      const entry = await queueService.callNext('CONSULTATION', room);
       if (entry) {
         await queueService.startService(entry.id);
         setCurrentPatient({ ...entry, roomNumber: room, status: 'IN_SERVICE' });
         setFormData(prev => ({ ...prev, patientId: entry.ticket.patient.id }));
         loadPatientHistory(entry.ticket.patient.id);
-        setSuccess(`Patient ${entry.ticket.patient.lastName} appelé`);
+        setSuccess(`Patient ${entry.ticket.patient.lastName} appelé en Salle ${room}`);
         setTimeout(() => setSuccess(''), 3000);
       } else {
         setError('Aucun patient en attente');

@@ -42,8 +42,8 @@ export const queueService = {
     throw new Error(response.data.error?.message || 'Erreur');
   },
 
-  async callNext(station: Station): Promise<QueueEntry | null> {
-    const response = await api.post<ApiResponse<QueueEntry>>(`/queue/${station}/call-next`);
+  async callNext(station: Station, roomNumber?: number): Promise<QueueEntry | null> {
+    const response = await api.post<ApiResponse<QueueEntry>>(`/queue/${station}/call-next`, { roomNumber });
     if (response.data.success) return response.data.data || null;
     throw new Error(response.data.error?.message || 'Erreur');
   },

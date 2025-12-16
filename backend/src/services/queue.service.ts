@@ -78,8 +78,9 @@ export class QueueService {
 
   /**
    * Appeler le prochain patient
+   * @param roomNumber - Numéro de salle spécifique (pour CONSULTATION)
    */
-  async callNext(station: Station, userId: string): Promise<QueueEntryWithDetails | null> {
+  async callNext(station: Station, userId: string, roomNumber?: number): Promise<QueueEntryWithDetails | null> {
     const today = new Date();
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
 
@@ -118,10 +119,10 @@ export class QueueService {
 
     if (!nextEntry) return null;
 
-    // Pour la station CONSULTATION, assigner une salle
-    let roomNumber: number | null = null;
+    // Pour la station CONSULTATION, utiliser le numéro de salle fourni ou assigner automatiquement
+    let assignedRoom: number | null = null;
     if (station === 'CONSULTATION') {
-      roomNumber = await this.getLeastBusyRoomNumber();
+      assignedRoom = roomNumber || await this.getLeastBusyRoomNumber();
     }
 
     // Mettre à jour le statut
@@ -130,7 +131,7 @@ export class QueueService {
       data: {
         status: 'CALLED',
         calledAt: new Date(),
-        roomNumber,
+        roomNumber: assignedRoom,
       },
       include: {
         ticket: {

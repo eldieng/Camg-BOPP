@@ -333,7 +333,16 @@ export default function AccueilPage() {
                       printWindow.document.write(ticketHtml);
                       printWindow.document.write('</body></html>');
                       printWindow.document.close();
-                      printWindow.print();
+                      
+                      // Attendre que l'image QR code soit chargée avant d'imprimer
+                      const img = printWindow.document.querySelector('img');
+                      if (img) {
+                        img.onload = () => printWindow.print();
+                        // Si l'image est déjà en cache
+                        if (img.complete) printWindow.print();
+                      } else {
+                        printWindow.print();
+                      }
                     }
                   }}
                 >

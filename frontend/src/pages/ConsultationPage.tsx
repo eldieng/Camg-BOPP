@@ -46,6 +46,15 @@ export default function ConsultationPage() {
 
       {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">{error}</div>}
 
+      {/* Message d'instruction */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-blue-800 font-medium">👨‍⚕️ Choisissez votre salle de consultation</p>
+        <p className="text-blue-600 text-sm mt-1">
+          Sélectionnez la salle qui vous est attribuée. Une fois dans la salle, vous pourrez appeler et consulter les patients.
+          <strong> Restez dans la même salle pendant toute votre session.</strong>
+        </p>
+      </div>
+
       {stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">

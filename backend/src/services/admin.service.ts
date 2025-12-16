@@ -1,5 +1,5 @@
 import prisma from '../lib/prisma.js';
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { UserRole } from '@prisma/client';
 
 export interface CreateUserDto {

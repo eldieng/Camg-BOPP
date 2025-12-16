@@ -3,9 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Search, Plus, Edit2, Trash2, Eye, RefreshCw, X, Check, Filter, History } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { patientService, Patient, CreatePatientDto } from '../services/patient.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function PatientsPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  
+  // Seuls ACCUEIL et ADMIN peuvent créer/modifier/supprimer des patients
+  const canEdit = user?.role === 'ACCUEIL' || user?.role === 'ADMIN';
+  const canDelete = user?.role === 'ADMIN';
   const [patients, setPatients] = useState<Patient[]>([]);
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 0 });
   const [searchQuery, setSearchQuery] = useState('');
@@ -155,9 +161,11 @@ export default function PatientsPage() {
           <Button onClick={() => loadPatients()} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />}>
             Actualiser
           </Button>
-          <Button onClick={() => { setShowForm(true); setEditingPatient(null); resetForm(); }} leftIcon={<Plus className="w-4 h-4" />}>
-            Nouveau patient
-          </Button>
+          {canEdit && (
+            <Button onClick={() => { setShowForm(true); setEditingPatient(null); resetForm(); }} leftIcon={<Plus className="w-4 h-4" />}>
+              Nouveau patient
+            </Button>
+          )}
         </div>
       </div>
 
@@ -412,8 +420,12 @@ export default function PatientsPage() {
                           <div className="flex justify-end space-x-1">
                             <Button size="sm" variant="ghost" onClick={() => setViewingPatient(patient)} leftIcon={<Eye className="w-3 h-3" />} />
                             <Button size="sm" variant="ghost" onClick={() => navigate(`/patients/${patient.id}/history`)} leftIcon={<History className="w-3 h-3" />} />
-                            <Button size="sm" variant="ghost" onClick={() => handleEdit(patient)} leftIcon={<Edit2 className="w-3 h-3" />} />
-                            <Button size="sm" variant="danger" onClick={() => handleDelete(patient)} leftIcon={<Trash2 className="w-3 h-3" />} />
+                            {canEdit && (
+                              <Button size="sm" variant="ghost" onClick={() => handleEdit(patient)} leftIcon={<Edit2 className="w-3 h-3" />} />
+                            )}
+                            {canDelete && (
+                              <Button size="sm" variant="danger" onClick={() => handleDelete(patient)} leftIcon={<Trash2 className="w-3 h-3" />} />
+                            )}
                           </div>
                         </td>
                       </tr>

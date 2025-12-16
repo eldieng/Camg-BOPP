@@ -38,7 +38,7 @@ router.get(
  */
 router.post(
   '/',
-  authorize('ACCUEIL', 'MEDECIN', 'ADMIN'),
+  authorize('ACCUEIL', 'ADMIN'),
   validate(createPatientValidation),
   (req, res) => patientController.create(req, res)
 );
@@ -67,7 +67,7 @@ router.get(
  */
 router.put(
   '/:id',
-  authorize('ACCUEIL', 'MEDECIN', 'ADMIN'),
+  authorize('ACCUEIL', 'ADMIN'),
   validate(updatePatientValidation),
   (req, res) => patientController.update(req, res)
 );

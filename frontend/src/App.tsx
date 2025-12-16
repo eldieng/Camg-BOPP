@@ -88,7 +88,7 @@ function App() {
             
             {/* Module Lunettes */}
             <Route path="lunettes" element={
-              <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
+              <ProtectedRoute allowedRoles={['LUNETTES', 'ADMIN']}>
                 <LunettesPage />
               </ProtectedRoute>
             } />

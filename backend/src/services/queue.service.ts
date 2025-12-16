@@ -63,14 +63,16 @@ export class QueueService {
       },
     });
 
-    // Tri personnalisé: statut (IN_SERVICE > CALLED > WAITING), puis priorité, puis position
+    // Tri personnalisé: statut (IN_SERVICE > CALLED > WAITING), puis priorité, puis position, puis numéro de ticket
     const statusOrder: Record<QueueStatus, number> = { IN_SERVICE: 1, CALLED: 2, WAITING: 3, COMPLETED: 4, SKIPPED: 5 };
     entries.sort((a, b) => {
       if (statusOrder[a.status] !== statusOrder[b.status]) return statusOrder[a.status] - statusOrder[b.status];
       const priorityA = PRIORITY_ORDER[a.ticket.priority as Priority] || 5;
       const priorityB = PRIORITY_ORDER[b.ticket.priority as Priority] || 5;
       if (priorityA !== priorityB) return priorityA - priorityB;
-      return a.position - b.position;
+      if (a.position !== b.position) return a.position - b.position;
+      // En dernier recours, trier par numéro de ticket
+      return a.ticket.ticketNumber.localeCompare(b.ticket.ticketNumber);
     });
 
     return entries as QueueEntryWithDetails[];
@@ -107,12 +109,14 @@ export class QueueService {
       },
     });
 
-    // Trier par priorité puis par position
+    // Trier par priorité puis par position puis par numéro de ticket
     waitingEntries.sort((a, b) => {
       const priorityA = PRIORITY_ORDER[a.ticket.priority as Priority] || 5;
       const priorityB = PRIORITY_ORDER[b.ticket.priority as Priority] || 5;
       if (priorityA !== priorityB) return priorityA - priorityB;
-      return a.position - b.position;
+      if (a.position !== b.position) return a.position - b.position;
+      // En dernier recours, trier par numéro de ticket
+      return a.ticket.ticketNumber.localeCompare(b.ticket.ticketNumber);
     });
 
     const nextEntry = waitingEntries[0] || null;

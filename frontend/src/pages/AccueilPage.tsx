@@ -5,6 +5,7 @@ import { patientService, Patient, CreatePatientDto } from '../services/patient.s
 import { ticketService, Ticket as TicketType, TicketsSummary } from '../services/ticket.service';
 import TicketPrint from '../components/TicketPrint';
 import { QRCodeSVG } from 'qrcode.react';
+import QRCode from 'qrcode';
 
 export default function AccueilPage() {
   const [activeTab, setActiveTab] = useState<'new' | 'search'>('new');
@@ -272,19 +273,20 @@ export default function AccueilPage() {
                 <Button 
                   variant="secondary" 
                   leftIcon={<Printer className="w-4 h-4" />}
-                  onClick={() => {
+                  onClick={async () => {
+                    if (!createdTicket) return;
+                    
+                    // Générer le QR code en base64
+                    const qrCodeUrl = `${window.location.origin}/ticket/${createdTicket.qrCode}`;
+                    const qrImageBase64 = await QRCode.toDataURL(qrCodeUrl, { width: 80, margin: 1 });
+                    
                     const printWindow = window.open('', '_blank');
                     if (printWindow && ticketPrintRef.current) {
-                      // Convertir le canvas QR code en image base64
-                      const canvas = ticketPrintRef.current.querySelector('canvas');
                       let htmlContent = ticketPrintRef.current.innerHTML;
                       
-                      if (canvas) {
-                        const qrImageBase64 = canvas.toDataURL('image/png');
-                        // Remplacer le canvas par une image
-                        const canvasHtml = canvas.outerHTML;
-                        htmlContent = htmlContent.replace(canvasHtml, `<img src="${qrImageBase64}" style="width:60px;height:60px;" />`);
-                      }
+                      // Remplacer le canvas par l'image base64
+                      const canvasRegex = /<canvas[^>]*>.*?<\/canvas>/gi;
+                      htmlContent = htmlContent.replace(canvasRegex, `<img src="${qrImageBase64}" style="width:60px;height:60px;" />`);
                       
                       printWindow.document.write('<html><head><title>Ticket CAMG-BOPP</title></head><body>');
                       printWindow.document.write(htmlContent);

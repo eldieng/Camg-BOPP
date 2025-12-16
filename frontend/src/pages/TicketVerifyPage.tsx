@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, User, Ticket, Calendar, Download } from 'lucide-react';
+import QRCode from 'qrcode';
 
 interface TicketInfo {
   ticketNumber: string;
@@ -208,194 +209,115 @@ export default function TicketVerifyPage() {
     </div>
   );
 
-  function downloadTicket() {
+  async function downloadTicket() {
     if (!ticket) return;
     
-    const ticketHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ticket ${ticket.ticketNumber} - CAMG-BOPP</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
-      font-family: 'Segoe UI', Arial, sans-serif; 
-      background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
-      min-height: 100vh;
-      padding: 20px;
+    // Générer le QR code en base64
+    const qrCodeUrl = window.location.href;
+    const qrImageBase64 = await QRCode.toDataURL(qrCodeUrl, { width: 120, margin: 1 });
+    
+    // Créer un canvas pour dessiner le ticket
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    
+    // Dimensions du ticket (format mobile-friendly)
+    const width = 400;
+    const height = 600;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Fond blanc
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    
+    // En-tête bleu
+    const gradient = ctx.createLinearGradient(0, 0, width, 80);
+    gradient.addColorStop(0, '#1e40af');
+    gradient.addColorStop(1, '#3b82f6');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, 80);
+    
+    // Titre
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('👁️ CAMG-BOPP', width / 2, 40);
+    ctx.font = '12px Arial';
+    ctx.fillText('Dispensaire Ophtalmologique', width / 2, 60);
+    
+    // Statut de validité
+    ctx.fillStyle = ticket.isValid ? '#dcfce7' : '#fef3c7';
+    ctx.fillRect(20, 100, width - 40, 50);
+    ctx.strokeStyle = ticket.isValid ? '#22c55e' : '#f59e0b';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(20, 100, width - 40, 50);
+    ctx.fillStyle = ticket.isValid ? '#15803d' : '#b45309';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText(ticket.isValid ? '✅ Ticket Valide' : '⚠️ Ticket Expiré', width / 2, 130);
+    
+    // Numéro de ticket
+    ctx.fillStyle = '#f8fafc';
+    ctx.fillRect(20, 170, width - 40, 100);
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.strokeRect(20, 170, width - 40, 100);
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px Arial';
+    ctx.fillText('VOTRE NUMÉRO', width / 2, 190);
+    ctx.fillStyle = '#1e40af';
+    ctx.font = 'bold 48px Arial';
+    ctx.fillText(ticket.ticketNumber.split('-').pop() || '', width / 2, 245);
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px Arial';
+    ctx.fillText(ticket.ticketNumber, width / 2, 265);
+    
+    // Infos patient
+    ctx.fillStyle = '#1e293b';
+    ctx.font = 'bold 16px Arial';
+    ctx.fillText(`${ticket.patient.lastName.toUpperCase()} ${ticket.patient.firstName}`, width / 2, 310);
+    
+    // Priorité si applicable
+    if (ticket.priority !== 'NORMAL') {
+      const priorityColors: Record<string, string> = {
+        EMERGENCY: '#fee2e2',
+        PREGNANT: '#fce7f3',
+        DISABLED: '#ede9fe',
+        ELDERLY: '#fef3c7'
+      };
+      ctx.fillStyle = priorityColors[ticket.priority] || '#f1f5f9';
+      ctx.fillRect(100, 325, width - 200, 30);
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 14px Arial';
+      ctx.fillText(PRIORITY_LABELS[ticket.priority], width / 2, 345);
     }
-    .ticket {
-      max-width: 350px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      overflow: hidden;
-    }
-    .header {
-      background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-      color: white;
-      padding: 20px;
-      text-align: center;
-    }
-    .header h1 { font-size: 24px; margin-bottom: 5px; }
-    .header p { opacity: 0.9; font-size: 12px; }
-    .content { padding: 20px; }
-    .ticket-number {
-      text-align: center;
-      background: #f8fafc;
-      border-radius: 12px;
-      padding: 15px;
-      margin-bottom: 15px;
-      border: 2px solid #e2e8f0;
-    }
-    .ticket-number .label { 
-      font-size: 10px; 
-      color: #64748b; 
-      text-transform: uppercase; 
-      letter-spacing: 2px; 
-    }
-    .ticket-number .number { 
-      font-size: 48px; 
-      font-weight: bold; 
-      color: #1e40af; 
-      line-height: 1.2;
-    }
-    .ticket-number .full { 
-      font-size: 12px; 
-      color: #94a3b8; 
-      font-family: monospace; 
-    }
-    .info-card {
-      background: #f1f5f9;
-      border-radius: 8px;
-      padding: 12px;
-      margin-bottom: 10px;
-    }
-    .info-card .label { font-size: 10px; color: #64748b; text-transform: uppercase; }
-    .info-card .value { font-size: 16px; font-weight: 600; color: #1e293b; }
-    .priority {
-      text-align: center;
-      padding: 10px;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-bottom: 10px;
-    }
-    .priority.emergency { background: #fee2e2; color: #b91c1c; border: 2px solid #ef4444; }
-    .priority.pregnant { background: #fce7f3; color: #be185d; border: 2px solid #ec4899; }
-    .priority.disabled { background: #ede9fe; color: #6d28d9; border: 2px solid #8b5cf6; }
-    .priority.elderly { background: #fef3c7; color: #b45309; border: 2px solid #f59e0b; }
-    .valid {
-      text-align: center;
-      padding: 15px;
-      background: ${ticket.isValid ? '#dcfce7' : '#fef3c7'};
-      border: 2px solid ${ticket.isValid ? '#22c55e' : '#f59e0b'};
-      border-radius: 12px;
-      margin-bottom: 15px;
-    }
-    .valid .icon { font-size: 24px; }
-    .valid .text { font-weight: 600; color: ${ticket.isValid ? '#15803d' : '#b45309'}; }
-    .qr-section {
-      text-align: center;
-      padding: 15px;
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-    .qr-section img { max-width: 120px; }
-    .qr-section p { font-size: 10px; color: #94a3b8; margin-top: 5px; }
-    .footer {
-      text-align: center;
-      padding: 15px;
-      border-top: 1px dashed #e2e8f0;
-      font-size: 12px;
-      color: #64748b;
-    }
-    .validity-date {
-      text-align: center;
-      font-size: 12px;
-      color: #64748b;
-      margin-bottom: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div class="ticket">
-    <div class="header">
-      <h1>👁️ CAMG-BOPP</h1>
-      <p>Dispensaire Ophtalmologique</p>
-    </div>
-    <div class="content">
-      <div class="valid">
-        <div class="icon">${ticket.isValid ? '✅' : '⚠️'}</div>
-        <div class="text">${ticket.isValid ? 'Ticket Valide' : 'Ticket Expiré'}</div>
-      </div>
+    
+    // QR Code
+    const qrImage = new Image();
+    qrImage.onload = () => {
+      ctx.drawImage(qrImage, (width - 120) / 2, 370, 120, 120);
       
-      <div class="ticket-number">
-        <div class="label">Votre numéro</div>
-        <div class="number">${ticket.ticketNumber.split('-').pop()}</div>
-        <div class="full">${ticket.ticketNumber}</div>
-      </div>
+      // Texte sous le QR
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '10px Arial';
+      ctx.fillText('Scanner pour vérification', width / 2, 505);
       
-      ${ticket.priority !== 'NORMAL' ? `
-      <div class="priority ${ticket.priority.toLowerCase()}">
-        ${ticket.priority === 'EMERGENCY' ? '🚨 Urgence' : 
-          ticket.priority === 'PREGNANT' ? '🤰 Femme Enceinte' : 
-          ticket.priority === 'DISABLED' ? '♿ Prioritaire' : '👴 3ème Âge'}
-      </div>
-      ` : ''}
+      // Date de validité
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px Arial';
+      ctx.fillText(`⏰ Valide jusqu'au ${new Date(ticket.validUntil).toLocaleDateString('fr-FR')}`, width / 2, 535);
       
-      <div class="info-card">
-        <div class="label">Patient</div>
-        <div class="value">${ticket.patient.lastName.toUpperCase()} ${ticket.patient.firstName}</div>
-      </div>
+      // Footer
+      ctx.fillStyle = '#64748b';
+      ctx.font = '12px Arial';
+      ctx.fillText('✨ Merci de votre confiance ✨', width / 2, 570);
+      ctx.fillText('www.camg-bopp.sn', width / 2, 590);
       
-      <div class="info-card">
-        <div class="label">Statut</div>
-        <div class="value">${STATUS_LABELS[ticket.status] || ticket.status}</div>
-      </div>
-      
-      ${ticket.currentStation ? `
-      <div class="info-card" style="background: #dbeafe;">
-        <div class="label">Station actuelle</div>
-        <div class="value" style="color: #1e40af;">${STATION_LABELS[ticket.currentStation] || ticket.currentStation}${ticket.queuePosition ? ` - Position #${ticket.queuePosition}` : ''}</div>
-      </div>
-      ` : ''}
-      
-      <div class="info-card">
-        <div class="label">Créé le</div>
-        <div class="value">${new Date(ticket.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</div>
-      </div>
-      
-      <div class="validity-date">
-        ⏰ Valide jusqu'au ${new Date(ticket.validUntil).toLocaleDateString('fr-FR')}
-      </div>
-      
-      <div class="qr-section">
-        <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.href)}" alt="QR Code" />
-        <p>Scanner pour vérification</p>
-      </div>
-      
-      <div class="footer">
-        ✨ Merci de votre confiance ✨<br/>
-        www.camg-bopp.sn
-      </div>
-    </div>
-  </div>
-</body>
-</html>`;
-
-    const blob = new Blob([ticketHtml], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ticket-${ticket.ticketNumber}.html`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      // Télécharger l'image
+      const link = document.createElement('a');
+      link.download = `ticket-${ticket.ticketNumber}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    };
+    qrImage.src = qrImageBase64;
   }
 }

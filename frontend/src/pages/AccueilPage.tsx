@@ -280,16 +280,57 @@ export default function AccueilPage() {
                     const qrCodeUrl = `${window.location.origin}/ticket/${createdTicket.qrCode}`;
                     const qrImageBase64 = await QRCode.toDataURL(qrCodeUrl, { width: 80, margin: 1 });
                     
+                    // Calculer l'âge
+                    const birthDate = new Date(createdTicket.patient.dateOfBirth);
+                    const age = new Date().getFullYear() - birthDate.getFullYear();
+                    const ticketDate = new Date(createdTicket.createdAt);
+                    
+                    // Priorité
+                    const priorityLabels: Record<string, { label: string; bg: string; border: string; text: string; icon: string }> = {
+                      EMERGENCY: { label: 'Urgence', bg: '#fee2e2', border: '#ef4444', text: '#b91c1c', icon: '🚨' },
+                      PREGNANT: { label: 'Femme Enceinte', bg: '#fce7f3', border: '#ec4899', text: '#be185d', icon: '🤰' },
+                      DISABLED: { label: 'Prioritaire', bg: '#ede9fe', border: '#8b5cf6', text: '#6d28d9', icon: '♿' },
+                      ELDERLY: { label: '3ème Âge', bg: '#fef3c7', border: '#f59e0b', text: '#b45309', icon: '👴' },
+                    };
+                    const priority = priorityLabels[createdTicket.priority];
+                    
+                    // Générer le HTML complet du ticket
+                    const ticketHtml = `
+                      <div style="width:58mm;padding:2mm;font-family:'Segoe UI',Arial,sans-serif;font-size:9px;background:white;color:#1f2937;">
+                        <div style="text-align:center;margin-bottom:2mm;background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%);padding:2mm;border-radius:2mm;color:white;">
+                          <div style="font-size:14px;font-weight:bold;">👁️ CAMG-BOPP</div>
+                          <div style="font-size:7px;opacity:0.9;">Dispensaire Ophtalmologique</div>
+                        </div>
+                        <div style="text-align:center;margin:2mm 0;padding:2mm;background:#f8fafc;border-radius:2mm;border:1px solid #e2e8f0;">
+                          <div style="font-size:7px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Votre numéro</div>
+                          <div style="font-size:32px;font-weight:bold;color:#1e40af;line-height:1.1;margin:1mm 0;">${createdTicket.ticketNumber.split('-').pop()}</div>
+                          <div style="font-size:8px;color:#94a3b8;font-family:monospace;">${createdTicket.ticketNumber}</div>
+                        </div>
+                        ${priority ? `<div style="text-align:center;padding:1mm;margin:1mm 0;background:${priority.bg};border:1px solid ${priority.border};border-radius:1mm;color:${priority.text};font-weight:bold;font-size:9px;">${priority.icon} ${priority.label}</div>` : ''}
+                        <div style="background:#f1f5f9;border-radius:1mm;padding:2mm;margin:2mm 0;">
+                          <div style="font-size:7px;color:#64748b;text-transform:uppercase;">Patient</div>
+                          <div style="font-size:11px;font-weight:bold;color:#1e293b;">${createdTicket.patient.lastName.toUpperCase()} ${createdTicket.patient.firstName}</div>
+                          <div style="font-size:8px;color:#64748b;">${age} ans</div>
+                        </div>
+                        <div style="text-align:center;margin:2mm 0;padding:1mm;background:white;border:1px solid #e2e8f0;border-radius:1mm;">
+                          <img src="${qrImageBase64}" style="width:60px;height:60px;" />
+                          <div style="font-size:6px;margin-top:1mm;color:#94a3b8;">Scanner pour vérification</div>
+                        </div>
+                        <div style="text-align:center;margin:2mm 0;font-size:8px;color:#1e40af;">
+                          📅 ${ticketDate.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} 🕐 ${ticketDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div style="margin:1mm 0;padding:1mm;background:#fef3c7;border-radius:1mm;font-size:6px;border-left:2px solid #f59e0b;">
+                          <div style="font-weight:bold;color:#92400e;">📋 Gardez ce ticket • Surveillez l'écran</div>
+                        </div>
+                        <div style="text-align:center;font-size:6px;color:#94a3b8;margin:1mm 0;">⏰ Valable 10 jours</div>
+                        <div style="margin-top:1mm;padding-top:1mm;border-top:1px dashed #cbd5e1;text-align:center;font-size:6px;color:#64748b;">✨ Merci • www.camg-bopp.sn</div>
+                      </div>
+                    `;
+                    
                     const printWindow = window.open('', '_blank');
-                    if (printWindow && ticketPrintRef.current) {
-                      let htmlContent = ticketPrintRef.current.innerHTML;
-                      
-                      // Remplacer le canvas par l'image base64
-                      const canvasRegex = /<canvas[^>]*>.*?<\/canvas>/gi;
-                      htmlContent = htmlContent.replace(canvasRegex, `<img src="${qrImageBase64}" style="width:60px;height:60px;" />`);
-                      
-                      printWindow.document.write('<html><head><title>Ticket CAMG-BOPP</title></head><body>');
-                      printWindow.document.write(htmlContent);
+                    if (printWindow) {
+                      printWindow.document.write('<html><head><title>Ticket CAMG-BOPP</title></head><body style="margin:0;padding:0;">');
+                      printWindow.document.write(ticketHtml);
                       printWindow.document.write('</body></html>');
                       printWindow.document.close();
                       printWindow.print();

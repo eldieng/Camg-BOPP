@@ -10,6 +10,7 @@ export interface LoginResult {
     firstName: string;
     lastName: string;
     role: string;
+    assignedRoom: number | null;
   };
   token: string;
   expiresIn: number;
@@ -81,6 +82,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        assignedRoom: user.assignedRoom,
       },
       token,
       expiresIn: 86400, // 24 heures en secondes

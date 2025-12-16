@@ -8,6 +8,7 @@ export interface CreateUserDto {
   firstName: string;
   lastName: string;
   role: UserRole;
+  assignedRoom?: number;
 }
 
 export interface UpdateUserDto {
@@ -15,6 +16,7 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
   role?: UserRole;
+  assignedRoom?: number | null;
   isActive?: boolean;
 }
 
@@ -24,6 +26,7 @@ export interface UserWithoutPassword {
   firstName: string;
   lastName: string;
   role: UserRole;
+  assignedRoom: number | null;
   isActive: boolean;
   lastLogin: Date | null;
   createdAt: Date;
@@ -41,6 +44,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -61,6 +65,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -90,6 +95,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -119,6 +125,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,
@@ -153,6 +160,7 @@ export class AdminService {
         firstName: true,
         lastName: true,
         role: true,
+        assignedRoom: true,
         isActive: true,
         lastLogin: true,
         createdAt: true,

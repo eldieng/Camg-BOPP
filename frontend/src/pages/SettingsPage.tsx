@@ -19,6 +19,7 @@ export default function SettingsPage() {
     firstName: '',
     lastName: '',
     role: 'ACCUEIL',
+    assignedRoom: undefined,
   });
 
   const loadUsers = async () => {
@@ -47,6 +48,7 @@ export default function SettingsPage() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           role: formData.role,
+          assignedRoom: formData.assignedRoom,
         });
         setSuccess('Utilisateur mis à jour');
       } else {
@@ -55,7 +57,7 @@ export default function SettingsPage() {
       }
       setShowForm(false);
       setEditingUser(null);
-      setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'ACCUEIL' });
+      setFormData({ email: '', password: '', firstName: '', lastName: '', role: 'ACCUEIL', assignedRoom: undefined });
       loadUsers();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
@@ -71,6 +73,7 @@ export default function SettingsPage() {
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
+      assignedRoom: user.assignedRoom ?? undefined,
     });
     setShowForm(true);
   };
@@ -147,15 +150,31 @@ export default function SettingsPage() {
               {!editingUser && (
                 <Input type="password" label="Mot de passe" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} required />
               )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded-lg" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}>
-                  <option value="ACCUEIL">Accueil</option>
-                  <option value="TEST_VUE">Test Vue</option>
-                  <option value="MEDECIN">Médecin</option>
-                  <option value="LUNETTES">Lunettes</option>
-                  <option value="ADMIN">Administrateur</option>
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded-lg" value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}>
+                    <option value="ACCUEIL">Accueil</option>
+                    <option value="TEST_VUE">Test Vue</option>
+                    <option value="MEDECIN">Médecin</option>
+                    <option value="LUNETTES">Lunettes</option>
+                    <option value="ADMIN">Administrateur</option>
+                  </select>
+                </div>
+                {formData.role === 'MEDECIN' && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Salle assignée</label>
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg" 
+                      value={formData.assignedRoom ?? ''} 
+                      onChange={(e) => setFormData({ ...formData, assignedRoom: e.target.value ? parseInt(e.target.value) : undefined })}
+                    >
+                      <option value="">Non assignée</option>
+                      <option value="1">Salle 1</option>
+                      <option value="2">Salle 2</option>
+                    </select>
+                  </div>
+                )}
               </div>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button type="submit" leftIcon={<Check className="w-4 h-4" />} className="w-full sm:w-auto">

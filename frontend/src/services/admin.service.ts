@@ -9,6 +9,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: UserRole;
+  assignedRoom?: number | null;
   isActive: boolean;
   lastLogin?: string;
   createdAt: string;
@@ -20,6 +21,7 @@ export interface CreateUserDto {
   firstName: string;
   lastName: string;
   role: UserRole;
+  assignedRoom?: number;
 }
 
 export interface UpdateUserDto {
@@ -27,6 +29,7 @@ export interface UpdateUserDto {
   firstName?: string;
   lastName?: string;
   role?: UserRole;
+  assignedRoom?: number | null;
   isActive?: boolean;
 }
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, XCircle, Clock, User, Ticket, Calendar, Download } from 'lucide-react';
 import QRCode from 'qrcode';

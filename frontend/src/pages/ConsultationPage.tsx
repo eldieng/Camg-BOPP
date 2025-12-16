@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { Stethoscope, RefreshCw, Users, DoorOpen } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ConsultationPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [stats, setStats] = useState<StationStats | null>(null);
   const [error, setError] = useState('');
@@ -25,6 +27,13 @@ export default function ConsultationPage() {
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
     }
   };
+
+  // Rediriger automatiquement vers la salle assignée si le médecin en a une
+  useEffect(() => {
+    if (user?.assignedRoom) {
+      navigate(`/consultation/salle/${user.assignedRoom}`);
+    }
+  }, [user, navigate]);
 
   useEffect(() => {
     loadQueue();

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Stethoscope, Phone, Check, UserX, RefreshCw, Plus, Trash2, Download, ArrowLeft } from 'lucide-react';
+import { Stethoscope, Phone, Check, UserX, RefreshCw, Plus, Trash2, Download, ArrowLeft, Calendar, Pill, X } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, CreateConsultationDto, CreatePrescriptionDto, PatientHistory } from '../services/consultation.service';
@@ -20,6 +20,12 @@ export default function ConsultationRoomPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState<'consultation' | 'history'>('consultation');
+  const [showAppointmentModal, setShowAppointmentModal] = useState(false);
+  const [appointmentData, setAppointmentData] = useState({
+    scheduledDate: '',
+    scheduledTime: '09:00',
+    reason: 'Suivi',
+  });
 
   const [formData, setFormData] = useState<CreateConsultationDto>({
     patientId: '', chiefComplaint: '', diagnosis: '', notes: '',
@@ -125,7 +131,7 @@ export default function ConsultationRoomPage() {
     setFormData(prev => ({ ...prev, prescriptions: prev.prescriptions?.filter((_, i) => i !== index) }));
   };
 
-  const handleSubmit = async (sendToLunettes: boolean = false) => {
+  const handleSubmit = async (nextStation: 'LUNETTES' | 'MEDICAMENTS' | null = null) => {
     if (!currentPatient) return;
     setError('');
     setSuccess('');
@@ -133,9 +139,9 @@ export default function ConsultationRoomPage() {
     try {
       await consultationService.create({ ...formData, queueEntryId: currentPatient.id });
 
-      if (sendToLunettes) {
-        await queueService.completeService(currentPatient.id, 'LUNETTES');
-        setSuccess('Consultation terminée - Patient envoyé aux Lunettes');
+      if (nextStation) {
+        await queueService.completeService(currentPatient.id, nextStation);
+        setSuccess(`Consultation terminée - Patient envoyé aux ${nextStation === 'LUNETTES' ? 'Lunettes' : 'Médicaments'}`);
       } else {
         await queueService.completeService(currentPatient.id);
         setSuccess('Consultation terminée');
@@ -146,6 +152,43 @@ export default function ConsultationRoomPage() {
       setFormData({ patientId: '', chiefComplaint: '', diagnosis: '', notes: '', intraocularPressureOD: undefined, intraocularPressureOG: undefined, prescriptions: [] });
       setTimeout(() => setSuccess(''), 3000);
       loadQueue();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Créer un rendez-vous de suivi
+  const handleCreateAppointment = async () => {
+    if (!currentPatient || !appointmentData.scheduledDate) return;
+    setError('');
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const response = await fetch(`${apiUrl}/appointments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          patientId: currentPatient.ticket.patient.id,
+          scheduledDate: appointmentData.scheduledDate,
+          scheduledTime: appointmentData.scheduledTime,
+          reason: appointmentData.reason || 'Suivi',
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess(`Rendez-vous créé pour le ${new Date(appointmentData.scheduledDate).toLocaleDateString('fr-FR')} à ${appointmentData.scheduledTime}`);
+        setShowAppointmentModal(false);
+        setAppointmentData({ scheduledDate: '', scheduledTime: '09:00', reason: 'Suivi' });
+      } else {
+        const data = await response.json();
+        setError(data.error?.message || 'Erreur lors de la création du rendez-vous');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur');
     } finally {
@@ -387,13 +430,23 @@ export default function ConsultationRoomPage() {
                     ))}
                   </div>
 
-                  <div className="flex space-x-2">
-                    <Button type="button" className="flex-1" isLoading={isLoading} onClick={() => handleSubmit(false)} leftIcon={<Check className="w-5 h-5" />}>
-                      Terminer (Médicament)
-                    </Button>
-                    <Button type="button" variant="success" className="flex-1" isLoading={isLoading} onClick={() => handleSubmit(true)} leftIcon={<Stethoscope className="w-5 h-5" />}>
-                      Envoyer aux Lunettes
-                    </Button>
+                  <div className="flex flex-col gap-2">
+                    <div className="flex space-x-2">
+                      <Button type="button" variant="success" className="flex-1" isLoading={isLoading} onClick={() => handleSubmit('LUNETTES')} leftIcon={<Stethoscope className="w-5 h-5" />}>
+                        Envoyer aux Lunettes
+                      </Button>
+                      <Button type="button" className="flex-1 bg-teal-600 hover:bg-teal-700" isLoading={isLoading} onClick={() => handleSubmit('MEDICAMENTS')} leftIcon={<Pill className="w-5 h-5" />}>
+                        Envoyer aux Médicaments
+                      </Button>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button type="button" variant="secondary" className="flex-1" isLoading={isLoading} onClick={() => handleSubmit(null)} leftIcon={<Check className="w-5 h-5" />}>
+                        Terminer (sans transfert)
+                      </Button>
+                      <Button type="button" variant="secondary" className="flex-1" onClick={() => setShowAppointmentModal(true)} leftIcon={<Calendar className="w-5 h-5" />}>
+                        Planifier RDV suivi
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -401,6 +454,78 @@ export default function ConsultationRoomPage() {
           </Card>
         </div>
       </div>
+
+      {/* Modal Rendez-vous de suivi */}
+      {showAppointmentModal && currentPatient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold">Planifier un rendez-vous de suivi</h2>
+              <button onClick={() => setShowAppointmentModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+              <p className="font-medium">{currentPatient.ticket.patient.firstName} {currentPatient.ticket.patient.lastName}</p>
+              <p className="text-sm text-gray-600">Ticket: {currentPatient.ticket.ticketNumber}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date du rendez-vous</label>
+                <Input
+                  type="date"
+                  value={appointmentData.scheduledDate}
+                  onChange={(e) => setAppointmentData({ ...appointmentData, scheduledDate: e.target.value })}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                <Input
+                  type="time"
+                  value={appointmentData.scheduledTime}
+                  onChange={(e) => setAppointmentData({ ...appointmentData, scheduledTime: e.target.value })}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Motif</label>
+                <Input
+                  placeholder="Ex: Contrôle, Suivi traitement..."
+                  value={appointmentData.reason}
+                  onChange={(e) => setAppointmentData({ ...appointmentData, reason: e.target.value })}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => setShowAppointmentModal(false)}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  type="button"
+                  className="flex-1"
+                  onClick={handleCreateAppointment}
+                  isLoading={isLoading}
+                  disabled={!appointmentData.scheduledDate}
+                  leftIcon={<Calendar className="w-4 h-4" />}
+                >
+                  Créer RDV
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

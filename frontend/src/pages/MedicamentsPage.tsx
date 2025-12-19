@@ -18,6 +18,8 @@ export default function MedicamentsPage() {
     reason: 'Suivi traitement',
   });
   const [lastConsultation, setLastConsultation] = useState<Consultation | null>(null);
+  const [ordonnanceText, setOrdonnanceText] = useState('');
+  const [ordonnanceSaved, setOrdonnanceSaved] = useState(false);
 
   // Charger la file d'attente
   const loadQueue = async () => {
@@ -60,6 +62,8 @@ export default function MedicamentsPage() {
       const entry = await queueService.callNext('MEDICAMENTS');
       if (entry) {
         setCurrentPatient(entry);
+        setOrdonnanceText('');
+        setOrdonnanceSaved(false);
         setSuccess('Patient appelé');
       } else {
         setSuccess('Aucun patient en attente');
@@ -101,6 +105,9 @@ export default function MedicamentsPage() {
       // Pas de prochaine station - le parcours est terminé
       await queueService.completeService(currentPatient.id);
       setCurrentPatient(null);
+      setOrdonnanceText('');
+      setOrdonnanceSaved(false);
+      setLastConsultation(null);
       setSuccess('Service terminé - Médicaments remis');
       loadQueue();
     } catch (err) {
@@ -129,11 +136,12 @@ export default function MedicamentsPage() {
 
   // Imprimer l'ordonnance
   const printOrdonnance = () => {
-    if (!currentPatient || !lastConsultation) return;
+    if (!currentPatient || !ordonnanceText.trim()) {
+      setError('Veuillez rédiger l\'ordonnance avant d\'imprimer');
+      return;
+    }
     
     const patient = currentPatient.ticket.patient;
-    const consultation = lastConsultation;
-    const prescriptions = consultation.prescriptions || [];
     
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
@@ -159,14 +167,7 @@ export default function MedicamentsPage() {
     .patient-info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
     .patient-info h3 { margin: 0 0 10px 0; color: #333; }
     .ordonnance-title { text-align: center; font-size: 20px; font-weight: bold; color: #1e40af; margin: 30px 0; text-transform: uppercase; letter-spacing: 2px; }
-    .prescription { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 15px; }
-    .prescription h4 { margin: 0 0 15px 0; color: #1e40af; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
-    .prescription-item { margin: 10px 0; padding: 10px; background: #f9fafb; border-radius: 4px; }
-    .prescription-item strong { color: #333; }
-    .diagnosis { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-    .diagnosis h4 { margin: 0 0 10px 0; color: #92400e; }
-    .notes { background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-    .notes h4 { margin: 0 0 10px 0; color: #0369a1; }
+    .ordonnance-content { background: #fff; border: 2px solid #1e40af; border-radius: 8px; padding: 30px; margin-bottom: 30px; min-height: 200px; white-space: pre-wrap; line-height: 1.8; font-size: 14px; }
     .footer { margin-top: 50px; text-align: right; }
     .footer .signature { border-top: 1px solid #333; width: 200px; margin-left: auto; padding-top: 10px; text-align: center; }
     .date { text-align: right; color: #666; margin-bottom: 20px; }
@@ -192,46 +193,11 @@ export default function MedicamentsPage() {
 
   <div class="ordonnance-title">📋 Ordonnance Médicale</div>
 
-  ${consultation.diagnosis ? `
-  <div class="diagnosis">
-    <h4>🔍 Diagnostic</h4>
-    <p>${consultation.diagnosis}</p>
-  </div>
-  ` : ''}
-
-  ${prescriptions.length > 0 ? `
-  <div class="prescription">
-    <h4>💊 Prescriptions</h4>
-    ${prescriptions.map((p, i) => `
-      <div class="prescription-item">
-        <strong>${i + 1}. ${p.eyeType === 'OD' ? 'Œil Droit (OD)' : 'Œil Gauche (OG)'}</strong>
-        <ul>
-          ${p.sphere !== undefined ? `<li>Sphère: ${p.sphere > 0 ? '+' : ''}${p.sphere}</li>` : ''}
-          ${p.cylinder !== undefined ? `<li>Cylindre: ${p.cylinder}</li>` : ''}
-          ${p.axis !== undefined ? `<li>Axe: ${p.axis}°</li>` : ''}
-          ${p.addition !== undefined ? `<li>Addition: +${p.addition}</li>` : ''}
-          ${p.lensType ? `<li>Type de verre: ${p.lensType}</li>` : ''}
-          ${p.coating ? `<li>Traitement: ${p.coating}</li>` : ''}
-          ${p.medication ? `<li>Médicament: ${p.medication}</li>` : ''}
-          ${p.dosage ? `<li>Posologie: ${p.dosage}</li>` : ''}
-          ${p.duration ? `<li>Durée: ${p.duration}</li>` : ''}
-          ${p.notes ? `<li>Notes: ${p.notes}</li>` : ''}
-        </ul>
-      </div>
-    `).join('')}
-  </div>
-  ` : '<p style="text-align: center; color: #666;">Aucune prescription</p>'}
-
-  ${consultation.notes ? `
-  <div class="notes">
-    <h4>📝 Notes du médecin</h4>
-    <p>${consultation.notes}</p>
-  </div>
-  ` : ''}
+  <div class="ordonnance-content">${ordonnanceText}</div>
 
   <div class="footer">
-    <p>Médecin: Dr. ${consultation.doctor?.lastName || ''} ${consultation.doctor?.firstName || ''}</p>
-    <div class="signature">Signature</div>
+    <p>Pharmacie CAMG-BOPP</p>
+    <div class="signature">Signature & Cachet</div>
   </div>
 </body>
 </html>`;
@@ -239,6 +205,7 @@ export default function MedicamentsPage() {
     printWindow.document.write(html);
     printWindow.document.close();
     printWindow.onload = () => printWindow.print();
+    setOrdonnanceSaved(true);
   };
 
   // Marquer absent
@@ -290,6 +257,9 @@ export default function MedicamentsPage() {
         setShowAppointmentModal(false);
         setAppointmentData({ scheduledDate: '', scheduledTime: '09:00', reason: 'Suivi traitement' });
         setCurrentPatient(null);
+        setOrdonnanceText('');
+        setOrdonnanceSaved(false);
+        setLastConsultation(null);
         loadQueue();
       } else {
         const data = await response.json();
@@ -471,94 +441,61 @@ export default function MedicamentsPage() {
                   </div>
                 </div>
 
-                {/* Ordonnance du médecin */}
+                {/* Infos consultation du médecin */}
                 {lastConsultation && (
-                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
-                    <div className="flex items-center justify-between mb-4">
-                      <h4 className="font-semibold text-blue-900 flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        Ordonnance du Médecin
-                      </h4>
-                      <Button onClick={printOrdonnance} size="sm" variant="secondary">
-                        <Printer className="w-4 h-4 mr-2" />
-                        Imprimer
-                      </Button>
-                    </div>
-                    
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
+                      <FileText className="w-5 h-5" />
+                      Retour du Médecin
+                    </h4>
                     {lastConsultation.diagnosis && (
-                      <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <div className="mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                         <p className="text-sm font-medium text-yellow-800">Diagnostic:</p>
                         <p className="text-yellow-900">{lastConsultation.diagnosis}</p>
                       </div>
                     )}
-
-                    {lastConsultation.prescriptions && lastConsultation.prescriptions.length > 0 ? (
-                      <div className="space-y-3">
-                        <p className="text-sm font-medium text-blue-800">Prescriptions:</p>
-                        {lastConsultation.prescriptions.map((p, i) => (
-                          <div key={i} className={`p-3 rounded-lg ${p.eyeType === 'OD' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                            <p className="font-medium text-sm mb-2">
-                              {p.eyeType === 'OD' ? '👁️ Œil Droit (OD)' : '👁️ Œil Gauche (OG)'}
-                            </p>
-                            <div className="grid grid-cols-2 gap-2 text-sm">
-                              {p.sphere !== undefined && <span>Sphère: {p.sphere > 0 ? '+' : ''}{p.sphere}</span>}
-                              {p.cylinder !== undefined && <span>Cylindre: {p.cylinder}</span>}
-                              {p.axis !== undefined && <span>Axe: {p.axis}°</span>}
-                              {p.addition !== undefined && <span>Addition: +{p.addition}</span>}
-                              {p.lensType && <span>Verre: {p.lensType}</span>}
-                              {p.coating && <span>Traitement: {p.coating}</span>}
-                              {p.medication && <span>💊 {p.medication}</span>}
-                              {p.dosage && <span>Posologie: {p.dosage}</span>}
-                              {p.duration && <span>Durée: {p.duration}</span>}
-                            </div>
-                            {p.notes && <p className="text-xs text-gray-600 mt-2">Note: {p.notes}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-center py-4">Aucune prescription</p>
-                    )}
-
                     {lastConsultation.notes && (
-                      <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Notes du médecin:</p>
+                      <div className="p-3 bg-gray-100 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Notes:</p>
                         <p className="text-gray-600 text-sm">{lastConsultation.notes}</p>
                       </div>
                     )}
                   </div>
                 )}
 
-                {!lastConsultation && (
-                  <div className="bg-gray-50 rounded-xl p-6 text-center text-gray-500">
-                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                    <p>Aucune consultation trouvée pour ce patient</p>
+                {/* Rédaction de l'ordonnance */}
+                <div className="bg-teal-50 rounded-xl p-6 border border-teal-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-teal-900 flex items-center gap-2">
+                      <FileText className="w-5 h-5" />
+                      Rédiger l'Ordonnance
+                    </h4>
+                    {ordonnanceSaved && (
+                      <span className="text-sm text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> Imprimée
+                      </span>
+                    )}
                   </div>
-                )}
-
-                {/* Checklist médicaments */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-gray-900 mb-4">Vérifications</h4>
-                  <div className="space-y-3">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded text-teal-600" />
-                      <span>Vérifier l'ordonnance du médecin</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded text-teal-600" />
-                      <span>Contrôler les médicaments (nom, dosage, quantité)</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded text-teal-600" />
-                      <span>Vérifier les allergies du patient</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded text-teal-600" />
-                      <span>Expliquer la posologie et les effets secondaires</span>
-                    </label>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-5 h-5 rounded text-teal-600" />
-                      <span>Remettre les médicaments au patient</span>
-                    </label>
+                  
+                  <textarea
+                    className="w-full h-48 p-4 border border-teal-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 resize-none"
+                    placeholder="Rédigez l'ordonnance ici...&#10;&#10;Exemple:&#10;- Collyre X : 1 goutte 3x/jour pendant 7 jours&#10;- Pommade Y : appliquer matin et soir&#10;- Comprimés Z : 1 cp/jour pendant 14 jours"
+                    value={ordonnanceText}
+                    onChange={(e) => {
+                      setOrdonnanceText(e.target.value);
+                      setOrdonnanceSaved(false);
+                    }}
+                  />
+                  
+                  <div className="mt-4 flex gap-2">
+                    <Button 
+                      onClick={printOrdonnance} 
+                      disabled={!ordonnanceText.trim()} 
+                      className="flex-1"
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Imprimer l'ordonnance
+                    </Button>
                   </div>
                 </div>
 
@@ -572,12 +509,26 @@ export default function MedicamentsPage() {
                   )}
                   {currentPatient.status === 'IN_SERVICE' && (
                     <>
+                      {!ordonnanceSaved && (
+                        <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg text-orange-800 text-sm">
+                          ⚠️ Veuillez rédiger et imprimer l'ordonnance avant de terminer
+                        </div>
+                      )}
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <Button onClick={handleComplete} disabled={isLoading} variant="success" className="flex-1">
+                        <Button 
+                          onClick={handleComplete} 
+                          disabled={isLoading || !ordonnanceSaved} 
+                          variant="success" 
+                          className="flex-1"
+                        >
                           <CheckCircle className="w-4 h-4 mr-2" />
                           Terminer (sans RDV)
                         </Button>
-                        <Button onClick={() => setShowAppointmentModal(true)} disabled={isLoading} className="flex-1 bg-teal-600 hover:bg-teal-700">
+                        <Button 
+                          onClick={() => setShowAppointmentModal(true)} 
+                          disabled={isLoading || !ordonnanceSaved} 
+                          className="flex-1 bg-teal-600 hover:bg-teal-700"
+                        >
                           <Calendar className="w-4 h-4 mr-2" />
                           Terminer + Planifier RDV
                         </Button>

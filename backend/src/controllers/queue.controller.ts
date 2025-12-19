@@ -128,6 +128,43 @@ export class QueueController {
       sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
     }
   }
+
+  /**
+   * GET /api/queue/missed-calls
+   * GET /api/queue/missed-calls/:station
+   * Récupérer les appels manqués
+   */
+  async getMissedCalls(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const station = req.params.station as Station | undefined;
+      const missedCalls = await queueService.getMissedCalls(station);
+      sendSuccess(res, missedCalls);
+    } catch (error) {
+      console.error('Erreur appels manqués:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
+    }
+  }
+
+  /**
+   * POST /api/queue/:entryId/recall
+   * Rappeler un patient marqué absent
+   */
+  async recallPatient(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { entryId } = req.params;
+      const entry = await queueService.recallMissedPatient(entryId);
+      
+      if (!entry) {
+        sendError(res, ErrorCodes.NOT_FOUND, 'Patient non trouvé ou non absent', 404);
+        return;
+      }
+      
+      sendSuccess(res, entry, 200, 'Patient remis en file d\'attente');
+    } catch (error) {
+      console.error('Erreur rappel patient:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors du rappel', 500);
+    }
+  }
 }
 
 export const queueController = new QueueController();

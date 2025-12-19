@@ -367,6 +367,83 @@ export class QueueService {
 
     return { station, waiting, inService, completed, avgWaitTime };
   }
+
+  /**
+   * Récupérer les appels manqués (patients marqués absents) du jour
+   */
+  async getMissedCalls(station?: Station): Promise<QueueEntryWithDetails[]> {
+    const today = new Date();
+    const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+
+    const where: any = {
+      status: 'SKIPPED',
+      createdAt: { gte: startOfDay },
+    };
+
+    if (station) {
+      where.station = station;
+    }
+
+    const entries = await prisma.queueEntry.findMany({
+      where,
+      include: {
+        ticket: {
+          include: {
+            patient: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+                phone: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
+
+    return entries as unknown as QueueEntryWithDetails[];
+  }
+
+  /**
+   * Rappeler un patient marqué absent
+   */
+  async recallMissedPatient(entryId: string): Promise<QueueEntryWithDetails | null> {
+    const entry = await prisma.queueEntry.findUnique({
+      where: { id: entryId },
+    });
+
+    if (!entry || entry.status !== 'SKIPPED') {
+      return null;
+    }
+
+    // Remettre le patient en attente
+    const updated = await prisma.queueEntry.update({
+      where: { id: entryId },
+      data: {
+        status: 'WAITING',
+        calledAt: null,
+      },
+      include: {
+        ticket: {
+          include: {
+            patient: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                dateOfBirth: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return updated as unknown as QueueEntryWithDetails;
+  }
 }
 
 export const queueService = new QueueService();

@@ -21,6 +21,22 @@ router.get(
 // Routes PROTÉGÉES (nécessitent authentification)
 router.use(authenticate);
 
+// Routes statiques AVANT les routes dynamiques
+// GET /api/queue/missed-calls - Tous les appels manqués
+router.get(
+  '/missed-calls',
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
+  (req, res) => queueController.getMissedCalls(req, res)
+);
+
+// GET /api/queue/missed-calls/:station - Appels manqués d'une station
+router.get(
+  '/missed-calls/:station',
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
+  validate(stationValidation),
+  (req, res) => queueController.getMissedCalls(req, res)
+);
+
 // GET /api/queue/:station - File d'attente d'une station
 router.get(
   '/:station',
@@ -65,6 +81,14 @@ router.post(
   authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
   validate(entryIdValidation),
   (req, res) => queueController.markNoShow(req, res)
+);
+
+// POST /api/queue/:entryId/recall - Rappeler un patient absent
+router.post(
+  '/:entryId/recall',
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
+  validate(entryIdValidation),
+  (req, res) => queueController.recallPatient(req, res)
 );
 
 export default router;

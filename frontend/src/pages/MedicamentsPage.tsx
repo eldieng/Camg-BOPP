@@ -20,6 +20,7 @@ export default function MedicamentsPage() {
   const [lastConsultation, setLastConsultation] = useState<Consultation | null>(null);
   const [ordonnanceText, setOrdonnanceText] = useState('');
   const [ordonnanceSaved, setOrdonnanceSaved] = useState(false);
+  const [todayAppointments, setTodayAppointments] = useState<any[]>([]);
 
   // Charger la file d'attente
   const loadQueue = async () => {
@@ -47,9 +48,36 @@ export default function MedicamentsPage() {
     }
   };
 
+  // Charger les RDV du jour
+  const loadTodayAppointments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+      const today = new Date().toISOString().split('T')[0];
+      const response = await fetch(`${apiUrl}/appointments?date=${today}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setTodayAppointments(data.data || []);
+        }
+      }
+    } catch (err) {
+      console.error('Erreur chargement RDV:', err);
+    }
+  };
+
   useEffect(() => {
     loadQueue();
-    const interval = setInterval(loadQueue, 10000);
+    loadTodayAppointments();
+    const interval = setInterval(() => {
+      loadQueue();
+      loadTodayAppointments();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 
@@ -261,6 +289,7 @@ export default function MedicamentsPage() {
         setOrdonnanceSaved(false);
         setLastConsultation(null);
         loadQueue();
+        loadTodayAppointments();
       } else {
         const data = await response.json();
         setError(data.error?.message || 'Erreur lors de la création du rendez-vous');
@@ -552,22 +581,58 @@ export default function MedicamentsPage() {
         </Card>
       </div>
 
-      {/* Instructions */}
+      {/* Rendez-vous du jour */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex items-start gap-4">
-            <div className="p-2 bg-teal-100 rounded-lg">
-              <Pill className="w-6 h-6 text-teal-600" />
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-teal-600" />
+            Rendez-vous du jour ({todayAppointments.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {todayAppointments.length === 0 ? (
+            <div className="text-center py-6 text-gray-500">
+              <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+              <p>Aucun rendez-vous aujourd'hui</p>
             </div>
-            <div>
-              <h4 className="font-semibold text-gray-900">Station Médicaments - Dernière étape</h4>
-              <p className="text-sm text-gray-600 mt-1">
-                Cette station est la dernière étape du parcours patient. Après la remise des médicaments, 
-                vous pouvez planifier un rendez-vous de suivi si le traitement nécessite un contrôle.
-                Assurez-vous de bien vérifier l'ordonnance et d'expliquer correctement la posologie.
-              </p>
+          ) : (
+            <div className="space-y-3">
+              {todayAppointments.map((apt) => (
+                <div
+                  key={apt.id}
+                  className={`p-3 rounded-lg border ${
+                    apt.status === 'COMPLETED' ? 'bg-gray-50 border-gray-200' :
+                    apt.status === 'CONFIRMED' ? 'bg-green-50 border-green-200' :
+                    apt.status === 'CANCELLED' ? 'bg-red-50 border-red-200' :
+                    'bg-blue-50 border-blue-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-semibold">
+                        {apt.patient?.firstName} {apt.patient?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {apt.scheduledTime} - {apt.reason || 'Consultation'}
+                      </p>
+                    </div>
+                    <span className={`px-2 py-1 text-xs rounded-full ${
+                      apt.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
+                      apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
+                      apt.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
+                      apt.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                      'bg-orange-100 text-orange-800'
+                    }`}>
+                      {apt.status === 'SCHEDULED' ? 'Programmé' :
+                       apt.status === 'CONFIRMED' ? 'Confirmé' :
+                       apt.status === 'COMPLETED' ? 'Effectué' :
+                       apt.status === 'CANCELLED' ? 'Annulé' : 'Absent'}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 

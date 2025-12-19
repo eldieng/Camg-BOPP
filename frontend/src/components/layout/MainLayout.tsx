@@ -132,12 +132,12 @@ export default function MainLayout() {
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+        {/* Logo - Fixed at top */}
+        <div className="flex items-center justify-between h-16 px-4 border-b flex-shrink-0">
           <div className="flex items-center space-x-2">
             <Eye className="w-8 h-8 text-primary-600" />
             <span className="text-xl font-bold text-gray-900">CAMG-BOPP</span>
@@ -150,15 +150,15 @@ export default function MainLayout() {
           </button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto min-h-0">
           {filteredNavItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                `flex items-center px-4 py-3 rounded-lg transition-colors ${
+                `flex items-center px-4 py-2.5 rounded-lg transition-colors text-sm ${
                   isActive
                     ? 'bg-primary-50 text-primary-700'
                     : 'text-gray-700 hover:bg-gray-100'
@@ -171,10 +171,10 @@ export default function MainLayout() {
           ))}
         </nav>
 
-        {/* User info */}
-        <div className="p-4 border-t">
+        {/* User info - Fixed at bottom */}
+        <div className="p-4 border-t flex-shrink-0 bg-white">
           <div className="flex items-center space-x-3 mb-3">
-            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-primary-700 font-semibold">
                 {user?.firstName?.[0]}
                 {user?.lastName?.[0]}

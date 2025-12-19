@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { UserPlus, Ticket, Search, RefreshCw, Printer, X } from 'lucide-react';
-import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input, Alert } from '../components/ui';
 import { patientService, Patient, CreatePatientDto } from '../services/patient.service';
 import { ticketService, Ticket as TicketType, TicketsSummary } from '../services/ticket.service';
 import TicketPrint from '../components/TicketPrint';
@@ -129,14 +129,10 @@ export default function AccueilPage() {
 
       {/* Messages feedback */}
       {success && (
-        <div className="p-3 rounded-lg bg-green-50 text-green-800 border border-green-200">
-          {success}
-        </div>
+        <Alert type="success" message={success} onClose={() => setSuccess('')} />
       )}
       {error && (
-        <div className="p-3 rounded-lg bg-red-50 text-red-800 border border-red-200">
-          {error}
-        </div>
+        <Alert type="error" message={error} onClose={() => setError('')} />
       )}
 
       {/* Résumé */}

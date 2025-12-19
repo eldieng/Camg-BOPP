@@ -37,7 +37,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function RendezVousPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [viewMode, setViewMode] = useState<'upcoming' | 'date'>('upcoming');
   const [isLoading, setIsLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -56,15 +57,20 @@ export default function RendezVousPage() {
     try {
       const token = localStorage.getItem('token');
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(
-        `${apiUrl}/appointments?date=${selectedDate}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      
+      let url = `${apiUrl}/appointments`;
+      if (viewMode === 'upcoming') {
+        url += '?upcoming=true';
+      } else if (selectedDate) {
+        url += `?date=${selectedDate}`;
+      }
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -80,7 +86,7 @@ export default function RendezVousPage() {
 
   useEffect(() => {
     loadAppointments();
-  }, [selectedDate]);
+  }, [selectedDate, viewMode]);
 
   // Recherche de patients
   useEffect(() => {
@@ -241,25 +247,56 @@ export default function RendezVousPage() {
         </Card>
       </div>
 
-      {/* Sélection de date */}
+      {/* Filtres */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <Calendar className="w-5 h-5 text-gray-500" />
-            <Input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="w-48"
-            />
-            <span className="text-gray-600">
-              {new Date(selectedDate).toLocaleDateString('fr-FR', {
-                weekday: 'long',
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
-            </span>
+          <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setViewMode('upcoming')}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === 'upcoming'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                À venir
+              </button>
+              <button
+                onClick={() => {
+                  setViewMode('date');
+                  if (!selectedDate) {
+                    setSelectedDate(new Date().toISOString().split('T')[0]);
+                  }
+                }}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  viewMode === 'date'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                Par date
+              </button>
+            </div>
+            {viewMode === 'date' && (
+              <>
+                <Calendar className="w-5 h-5 text-gray-500" />
+                <Input
+                  type="date"
+                  value={selectedDate}
+                  onChange={(e) => setSelectedDate(e.target.value)}
+                  className="w-48"
+                />
+                <span className="text-gray-600">
+                  {selectedDate && new Date(selectedDate).toLocaleDateString('fr-FR', {
+                    weekday: 'long',
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                  })}
+                </span>
+              </>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -267,7 +304,9 @@ export default function RendezVousPage() {
       {/* Liste des rendez-vous */}
       <Card>
         <CardHeader>
-          <CardTitle>Rendez-vous du jour</CardTitle>
+          <CardTitle>
+            {viewMode === 'upcoming' ? 'Rendez-vous à venir' : 'Rendez-vous du jour'}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -275,19 +314,30 @@ export default function RendezVousPage() {
           ) : appointments.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <Calendar className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>Aucun rendez-vous pour cette date</p>
+              <p>{viewMode === 'upcoming' ? 'Aucun rendez-vous à venir' : 'Aucun rendez-vous pour cette date'}</p>
             </div>
           ) : (
             <div className="space-y-3">
               {appointments
-                .sort((a, b) => a.scheduledTime.localeCompare(b.scheduledTime))
-                .map((appointment) => (
+                .sort((a, b) => {
+                  // Trier par date puis par heure
+                  const dateCompare = a.scheduledDate.localeCompare(b.scheduledDate);
+                  if (dateCompare !== 0) return dateCompare;
+                  return a.scheduledTime.localeCompare(b.scheduledTime);
+                })
+                .map((appointment) => {
+                  const aptDate = new Date(appointment.scheduledDate);
+                  const dateStr = aptDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                  return (
                   <div
                     key={appointment.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="text-center bg-white p-2 rounded-lg shadow-sm min-w-[60px]">
+                      <div className="text-center bg-white p-2 rounded-lg shadow-sm min-w-[80px]">
+                        {viewMode === 'upcoming' && (
+                          <div className="text-xs text-primary-600 font-medium mb-1">{dateStr}</div>
+                        )}
                         <Clock className="w-4 h-4 mx-auto text-gray-400 mb-1" />
                         <div className="font-bold text-lg">{appointment.scheduledTime}</div>
                       </div>
@@ -352,7 +402,8 @@ export default function RendezVousPage() {
                       )}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
             </div>
           )}
         </CardContent>

@@ -48,13 +48,12 @@ export default function MedicamentsPage() {
     }
   };
 
-  // Charger les RDV du jour
-  const loadTodayAppointments = async () => {
+  // Charger les RDV à venir
+  const loadUpcomingAppointments = async () => {
     try {
       const token = localStorage.getItem('token');
       const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const today = new Date().toISOString().split('T')[0];
-      const response = await fetch(`${apiUrl}/appointments?date=${today}`, {
+      const response = await fetch(`${apiUrl}/appointments?upcoming=true`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -73,10 +72,10 @@ export default function MedicamentsPage() {
 
   useEffect(() => {
     loadQueue();
-    loadTodayAppointments();
+    loadUpcomingAppointments();
     const interval = setInterval(() => {
       loadQueue();
-      loadTodayAppointments();
+      loadUpcomingAppointments();
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -581,56 +580,60 @@ export default function MedicamentsPage() {
         </Card>
       </div>
 
-      {/* Rendez-vous du jour */}
+      {/* Rendez-vous à venir */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="w-5 h-5 text-teal-600" />
-            Rendez-vous du jour ({todayAppointments.length})
+            Rendez-vous à venir ({todayAppointments.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
           {todayAppointments.length === 0 ? (
             <div className="text-center py-6 text-gray-500">
               <Calendar className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-              <p>Aucun rendez-vous aujourd'hui</p>
+              <p>Aucun rendez-vous programmé</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {todayAppointments.map((apt) => (
-                <div
-                  key={apt.id}
-                  className={`p-3 rounded-lg border ${
-                    apt.status === 'COMPLETED' ? 'bg-gray-50 border-gray-200' :
-                    apt.status === 'CONFIRMED' ? 'bg-green-50 border-green-200' :
-                    apt.status === 'CANCELLED' ? 'bg-red-50 border-red-200' :
-                    'bg-blue-50 border-blue-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-semibold">
-                        {apt.patient?.firstName} {apt.patient?.lastName}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {apt.scheduledTime} - {apt.reason || 'Consultation'}
-                      </p>
+              {todayAppointments.map((apt) => {
+                const aptDate = new Date(apt.scheduledDate);
+                const dateStr = aptDate.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                return (
+                  <div
+                    key={apt.id}
+                    className={`p-3 rounded-lg border ${
+                      apt.status === 'COMPLETED' ? 'bg-gray-50 border-gray-200' :
+                      apt.status === 'CONFIRMED' ? 'bg-green-50 border-green-200' :
+                      apt.status === 'CANCELLED' ? 'bg-red-50 border-red-200' :
+                      'bg-blue-50 border-blue-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-semibold">
+                          {apt.patient?.firstName} {apt.patient?.lastName}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium text-teal-700">{dateStr}</span> à {apt.scheduledTime} - {apt.reason || 'Consultation'}
+                        </p>
+                      </div>
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        apt.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
+                        apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
+                        apt.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
+                        apt.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                        'bg-orange-100 text-orange-800'
+                      }`}>
+                        {apt.status === 'SCHEDULED' ? 'Programmé' :
+                         apt.status === 'CONFIRMED' ? 'Confirmé' :
+                         apt.status === 'COMPLETED' ? 'Effectué' :
+                         apt.status === 'CANCELLED' ? 'Annulé' : 'Absent'}
+                      </span>
                     </div>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      apt.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
-                      apt.status === 'CONFIRMED' ? 'bg-green-100 text-green-800' :
-                      apt.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
-                      apt.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
-                      'bg-orange-100 text-orange-800'
-                    }`}>
-                      {apt.status === 'SCHEDULED' ? 'Programmé' :
-                       apt.status === 'CONFIRMED' ? 'Confirmé' :
-                       apt.status === 'COMPLETED' ? 'Effectué' :
-                       apt.status === 'CANCELLED' ? 'Annulé' : 'Absent'}
-                    </span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardContent>

@@ -27,12 +27,19 @@ export class AppointmentController {
    */
   async findAll(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const { date, startDate, endDate, status } = req.query;
+      const { date, startDate, endDate, status, upcoming } = req.query;
 
       let where: any = {};
 
+      // Récupérer les RDV à venir (à partir d'aujourd'hui)
+      if (upcoming === 'true') {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        where.scheduledDate = { gte: today };
+        where.status = { notIn: ['CANCELLED', 'COMPLETED', 'NO_SHOW'] };
+      }
       // Filtrer par date unique
-      if (date) {
+      else if (date) {
         // Chercher les RDV dont la date correspond (en ignorant l'heure)
         const dateStr = date as string; // format YYYY-MM-DD
         // Créer une plage large pour capturer toutes les heures possibles
@@ -42,17 +49,16 @@ export class AppointmentController {
         endOfDay.setHours(endOfDay.getHours() + 12); // 12h après pour couvrir tous les fuseaux
         where.scheduledDate = { gte: startOfDay, lte: endOfDay };
       }
-
       // Filtrer par période
-      if (startDate && endDate) {
+      else if (startDate && endDate) {
         where.scheduledDate = {
           gte: new Date(startDate as string),
           lte: new Date(endDate as string),
         };
       }
 
-      // Filtrer par statut
-      if (status) {
+      // Filtrer par statut (si pas déjà défini par upcoming)
+      if (status && !where.status) {
         where.status = status;
       }
 

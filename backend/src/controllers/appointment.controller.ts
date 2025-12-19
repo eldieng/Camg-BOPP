@@ -33,10 +33,13 @@ export class AppointmentController {
 
       // Filtrer par date unique
       if (date) {
-        // Utiliser la date comme string pour éviter les problèmes de timezone
+        // Chercher les RDV dont la date correspond (en ignorant l'heure)
         const dateStr = date as string; // format YYYY-MM-DD
+        // Créer une plage large pour capturer toutes les heures possibles
         const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+        startOfDay.setHours(startOfDay.getHours() - 12); // 12h avant pour couvrir tous les fuseaux
         const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
+        endOfDay.setHours(endOfDay.getHours() + 12); // 12h après pour couvrir tous les fuseaux
         where.scheduledDate = { gte: startOfDay, lte: endOfDay };
       }
 

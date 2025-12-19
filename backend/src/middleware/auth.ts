@@ -3,6 +3,7 @@ import { UserRole } from '@prisma/client';
 import { AuthenticatedRequest } from '../types/index.js';
 import { verifyToken, extractTokenFromHeader } from '../utils/jwt.js';
 import { sendError, ErrorCodes } from '../utils/response.js';
+import { tokenBlacklist } from '../services/tokenBlacklist.service.js';
 
 /**
  * Middleware d'authentification
@@ -20,6 +21,12 @@ export function authenticate(
     return;
   }
 
+  // Vérifier si le token est blacklisté (déconnexion)
+  if (tokenBlacklist.isBlacklisted(token)) {
+    sendError(res, ErrorCodes.UNAUTHORIZED, 'Session expirée. Veuillez vous reconnecter.', 401);
+    return;
+  }
+
   const payload = verifyToken(token);
 
   if (!payload) {
@@ -28,6 +35,7 @@ export function authenticate(
   }
 
   req.user = payload;
+  (req as any).token = token; // Stocker le token pour la déconnexion
   next();
 }
 

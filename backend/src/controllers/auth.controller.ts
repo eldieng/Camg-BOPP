@@ -3,6 +3,8 @@ import { body } from 'express-validator';
 import { AuthenticatedRequest } from '../types/index.js';
 import { authService, LoginError } from '../services/auth.service.js';
 import { sendSuccess, sendError, ErrorCodes } from '../utils/response.js';
+import { tokenBlacklist } from '../services/tokenBlacklist.service.js';
+import { auditLog } from '../services/auditLog.service.js';
 
 /**
  * Validations pour le login
@@ -39,26 +41,63 @@ export class AuthController {
    */
   async login(req: AuthenticatedRequest, res: Response): Promise<void> {
     const { email, password } = req.body;
+    const ipAddress = req.ip || req.socket.remoteAddress;
 
     const result = await authService.login(email, password);
 
     // Vérifier si c'est une erreur
     if ('code' in result) {
       const error = result as LoginError;
+      
+      // Log de tentative échouée
+      await auditLog.log({
+        action: 'LOGIN_FAILED',
+        entity: 'AUTH',
+        details: { email, reason: error.message },
+        ipAddress,
+      });
+      
       sendError(res, error.code, error.message, 401);
       return;
     }
+
+    // Log de connexion réussie
+    await auditLog.log({
+      action: 'LOGIN',
+      userId: result.user.id,
+      entity: 'AUTH',
+      details: { email },
+      ipAddress,
+    });
 
     sendSuccess(res, result, 200, 'Connexion réussie');
   }
 
   /**
    * POST /auth/logout
-   * Déconnexion (côté client, invalider le token)
+   * Déconnexion - blackliste le token JWT
    */
-  async logout(_req: AuthenticatedRequest, res: Response): Promise<void> {
-    // Le token JWT est stateless, la déconnexion se fait côté client
-    // On pourrait implémenter une blacklist de tokens si nécessaire
+  async logout(req: AuthenticatedRequest, res: Response): Promise<void> {
+    const token = (req as any).token;
+    const ipAddress = req.ip || req.socket.remoteAddress;
+    
+    if (token && req.user) {
+      // Calculer l'expiration du token (24h par défaut)
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + 24);
+      
+      // Ajouter le token à la blacklist
+      tokenBlacklist.add(token, expiresAt);
+      
+      // Log de déconnexion
+      await auditLog.log({
+        action: 'LOGOUT',
+        userId: req.user.userId,
+        entity: 'AUTH',
+        ipAddress,
+      });
+    }
+    
     sendSuccess(res, null, 200, 'Déconnexion réussie');
   }
 

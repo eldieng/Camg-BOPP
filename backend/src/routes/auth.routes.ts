@@ -2,15 +2,17 @@ import { Router } from 'express';
 import { authController, loginValidation, changePasswordValidation } from '../controllers/auth.controller.js';
 import { authenticate } from '../middleware/auth.js';
 import { validate } from '../middleware/validation.js';
+import { authLimiter } from '../middleware/rateLimiter.js';
 
 const router = Router();
 
 /**
  * POST /api/auth/login
- * Connexion utilisateur
+ * Connexion utilisateur (avec rate limiting)
  */
 router.post(
   '/login',
+  authLimiter,
   validate(loginValidation),
   (req, res) => authController.login(req, res)
 );

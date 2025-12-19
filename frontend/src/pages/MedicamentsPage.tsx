@@ -187,7 +187,7 @@ export default function MedicamentsPage() {
   <div class="patient-info">
     <h3>Patient: ${patient.lastName} ${patient.firstName}</h3>
     <p>Âge: ${calculateAge(patient.dateOfBirth)} ans</p>
-    ${patient.phone ? `<p>Téléphone: ${patient.phone}</p>` : ''}
+    ${(patient as any).phone ? `<p>Téléphone: ${(patient as any).phone}</p>` : ''}
   </div>
 
   <div class="ordonnance-title">📋 Ordonnance Médicale</div>
@@ -255,43 +255,6 @@ export default function MedicamentsPage() {
     } catch (err) {
       console.error('Erreur no-show:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du marquage absent');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Créer un rendez-vous de suivi
-  const handleCreateAppointment = async () => {
-    if (!currentPatient || !appointmentData.scheduledDate) return;
-    setError('');
-    setIsLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/appointments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          patientId: currentPatient.ticket.patient.id,
-          scheduledDate: appointmentData.scheduledDate,
-          scheduledTime: appointmentData.scheduledTime,
-          reason: appointmentData.reason || 'Suivi traitement',
-        }),
-      });
-
-      if (response.ok) {
-        setSuccess(`Rendez-vous créé pour le ${new Date(appointmentData.scheduledDate).toLocaleDateString('fr-FR')} à ${appointmentData.scheduledTime}`);
-        setShowAppointmentModal(false);
-        setAppointmentData({ scheduledDate: '', scheduledTime: '09:00', reason: 'Suivi traitement' });
-      } else {
-        const data = await response.json();
-        setError(data.error?.message || 'Erreur lors de la création du rendez-vous');
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur');
     } finally {
       setIsLoading(false);
     }

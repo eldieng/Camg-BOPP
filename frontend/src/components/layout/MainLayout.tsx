@@ -30,7 +30,7 @@ const navItems: NavItem[] = [
     label: 'Tableau de bord',
     path: '/',
     icon: <Home className="w-5 h-5" />,
-    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'],
+    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'],
   },
   {
     label: 'Accueil / Tickets',
@@ -48,7 +48,7 @@ const navItems: NavItem[] = [
     label: 'Patients',
     path: '/patients',
     icon: <Users className="w-5 h-5" />,
-    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'],
+    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'],
   },
   {
     label: 'Test de vue',
@@ -67,6 +67,12 @@ const navItems: NavItem[] = [
     path: '/lunettes',
     icon: <Eye className="w-5 h-5" />,
     roles: ['LUNETTES', 'ADMIN'],
+  },
+  {
+    label: 'Médicaments',
+    path: '/medicaments',
+    icon: <TestTube className="w-5 h-5" />,
+    roles: ['MEDICAMENTS', 'ADMIN'],
   },
   {
     label: 'Statistiques',
@@ -108,6 +114,7 @@ export default function MainLayout() {
       MEDECIN: { label: 'Médecin', color: 'bg-blue-100 text-blue-800' },
       TEST_VUE: { label: 'Test Vue', color: 'bg-green-100 text-green-800' },
       LUNETTES: { label: 'Lunettes', color: 'bg-purple-100 text-purple-800' },
+      MEDICAMENTS: { label: 'Médicaments', color: 'bg-teal-100 text-teal-800' },
       ACCUEIL: { label: 'Accueil', color: 'bg-yellow-100 text-yellow-800' },
     };
     return badges[role];

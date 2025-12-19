@@ -27,18 +27,21 @@ const STATION_LABELS: Record<string, string> = {
   TEST_VUE: 'Test de Vue',
   CONSULTATION: 'Consultation',
   LUNETTES: 'Salle des Lunettes',
+  MEDICAMENTS: 'Salle des Médicaments',
 };
 
 const STATION_VOICE_LABELS: Record<string, string> = {
   TEST_VUE: 'salle de Test de Vue',
   CONSULTATION: 'salle de Consultation',
   LUNETTES: 'salle des Lunettes',
+  MEDICAMENTS: 'salle des Médicaments',
 };
 
 const STATION_COLORS: Record<string, string> = {
   TEST_VUE: 'from-blue-500 to-blue-600',
   CONSULTATION: 'from-green-500 to-green-600',
   LUNETTES: 'from-purple-500 to-purple-600',
+  MEDICAMENTS: 'from-teal-500 to-teal-600',
 };
 
 export default function DisplayPage() {
@@ -111,7 +114,7 @@ export default function DisplayPage() {
   // Charger les données des files d'attente
   const loadQueues = async () => {
     try {
-      const stations = ['TEST_VUE', 'CONSULTATION', 'LUNETTES'];
+      const stations = ['TEST_VUE', 'CONSULTATION', 'LUNETTES', 'MEDICAMENTS'];
       const queueData: QueueDisplay[] = [];
 
       for (const station of stations) {

@@ -1,7 +1,7 @@
 import api from './api';
 import { ApiResponse } from '../types';
 
-export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'ADMIN';
+export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'MEDICAMENTS' | 'ADMIN';
 
 export interface User {
   id: string;
@@ -87,8 +87,8 @@ export const adminService = {
     throw new Error(response.data.error?.message || 'Erreur');
   },
 
-  getRoleLabel: (r: UserRole) => ({ ACCUEIL: 'Accueil', TEST_VUE: 'Test Vue', MEDECIN: 'Médecin', LUNETTES: 'Lunettes', ADMIN: 'Admin' }[r]),
-  getRoleColor: (r: UserRole) => ({ ACCUEIL: 'bg-blue-100 text-blue-800', TEST_VUE: 'bg-purple-100 text-purple-800', MEDECIN: 'bg-green-100 text-green-800', LUNETTES: 'bg-orange-100 text-orange-800', ADMIN: 'bg-red-100 text-red-800' }[r]),
+  getRoleLabel: (r: UserRole) => ({ ACCUEIL: 'Accueil', TEST_VUE: 'Test Vue', MEDECIN: 'Médecin', LUNETTES: 'Lunettes', MEDICAMENTS: 'Médicaments', ADMIN: 'Admin' }[r]),
+  getRoleColor: (r: UserRole) => ({ ACCUEIL: 'bg-blue-100 text-blue-800', TEST_VUE: 'bg-purple-100 text-purple-800', MEDECIN: 'bg-green-100 text-green-800', LUNETTES: 'bg-orange-100 text-orange-800', MEDICAMENTS: 'bg-teal-100 text-teal-800', ADMIN: 'bg-red-100 text-red-800' }[r]),
 };
 
 export default adminService;

@@ -38,7 +38,7 @@ router.get(
 // POST /api/queue/:station/call-next - Appeler le prochain
 router.post(
   '/:station/call-next',
-  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'),
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
   validate(stationValidation),
   (req, res) => queueController.callNext(req, res)
 );
@@ -46,7 +46,7 @@ router.post(
 // POST /api/queue/:entryId/start - Démarrer le service
 router.post(
   '/:entryId/start',
-  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'),
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
   validate(entryIdValidation),
   (req, res) => queueController.startService(req, res)
 );
@@ -54,7 +54,7 @@ router.post(
 // POST /api/queue/:entryId/complete - Terminer le service
 router.post(
   '/:entryId/complete',
-  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'),
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
   validate(completeServiceValidation),
   (req, res) => queueController.completeService(req, res)
 );
@@ -62,7 +62,7 @@ router.post(
 // POST /api/queue/:entryId/no-show - Marquer absent
 router.post(
   '/:entryId/no-show',
-  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'ADMIN'),
+  authorize('ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'),
   validate(entryIdValidation),
   (req, res) => queueController.markNoShow(req, res)
 );

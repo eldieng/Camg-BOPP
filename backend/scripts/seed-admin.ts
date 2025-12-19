@@ -43,6 +43,7 @@ async function main() {
     { email: 'testvue@camg-bopp.com', firstName: 'Technicien', lastName: 'Vision', role: 'TEST_VUE' as const },
     { email: 'medecin@camg-bopp.com', firstName: 'Dr', lastName: 'Ophtalmologue', role: 'MEDECIN' as const },
     { email: 'lunettes@camg-bopp.com', firstName: 'Opticien', lastName: 'Lunettes', role: 'LUNETTES' as const },
+    { email: 'medicaments@camg-bopp.com', firstName: 'Pharmacien', lastName: 'Médicaments', role: 'MEDICAMENTS' as const },
   ];
 
   for (const userData of users) {

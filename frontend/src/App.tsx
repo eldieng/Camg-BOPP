@@ -14,6 +14,7 @@ import PatientsPage from './pages/PatientsPage';
 import DisplayPage from './pages/DisplayPage';
 import RendezVousPage from './pages/RendezVousPage';
 import LunettesPage from './pages/LunettesPage';
+import MedicamentsPage from './pages/MedicamentsPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
 import ReportsPage from './pages/ReportsPage';
 import TicketVerifyPage from './pages/TicketVerifyPage';
@@ -90,6 +91,13 @@ function App() {
             <Route path="lunettes" element={
               <ProtectedRoute allowedRoles={['LUNETTES', 'ADMIN']}>
                 <LunettesPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Module Médicaments */}
+            <Route path="medicaments" element={
+              <ProtectedRoute allowedRoles={['MEDICAMENTS', 'ADMIN']}>
+                <MedicamentsPage />
               </ProtectedRoute>
             } />
             

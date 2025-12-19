@@ -19,6 +19,7 @@ enum UserRole {
   TEST_VUE
   MEDECIN
   LUNETTES
+  MEDICAMENTS
   ADMIN
 }
 
@@ -48,6 +49,7 @@ enum Station {
   TEST_VUE
   CONSULTATION
   LUNETTES
+  MEDICAMENTS
 }
 
 enum QueueStatus {

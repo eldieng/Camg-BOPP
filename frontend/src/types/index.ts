@@ -1,5 +1,5 @@
 // Types utilisateur
-export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'ADMIN';
+export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'MEDICAMENTS' | 'ADMIN';
 
 export interface User {
   id: string;
@@ -77,7 +77,7 @@ export interface Ticket {
 }
 
 // Types File d'attente
-export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION' | 'LUNETTES';
+export type Station = 'ACCUEIL' | 'TEST_VUE' | 'CONSULTATION' | 'LUNETTES' | 'MEDICAMENTS';
 export type QueueStatus = 'WAITING' | 'CALLED' | 'IN_SERVICE' | 'COMPLETED' | 'SKIPPED';
 
 export interface QueueEntry {

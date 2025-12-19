@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Pill, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Calendar, X } from 'lucide-react';
+import { Pill, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Calendar, X, FileText, Printer } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
+import { consultationService, Consultation } from '../services/consultation.service';
 
 export default function MedicamentsPage() {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -16,6 +17,7 @@ export default function MedicamentsPage() {
     scheduledTime: '09:00',
     reason: 'Suivi traitement',
   });
+  const [lastConsultation, setLastConsultation] = useState<Consultation | null>(null);
 
   // Charger la file d'attente
   const loadQueue = async () => {
@@ -28,7 +30,15 @@ export default function MedicamentsPage() {
       // Trouver le patient en service
       const called = data.queue.find(q => q.status === 'CALLED');
       const inService = data.queue.find(q => q.status === 'IN_SERVICE');
-      setCurrentPatient(inService || called || null);
+      const patient = inService || called || null;
+      setCurrentPatient(patient);
+      
+      // Charger la dernière consultation si patient en service
+      if (patient && patient.ticket.patient.id) {
+        loadLastConsultation(patient.ticket.patient.id);
+      } else {
+        setLastConsultation(null);
+      }
     } catch (err) {
       console.error('Erreur chargement file:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
@@ -99,6 +109,136 @@ export default function MedicamentsPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Charger la dernière consultation du patient
+  const loadLastConsultation = async (patientId: string) => {
+    try {
+      const consultations = await consultationService.getByPatient(patientId);
+      if (consultations && consultations.length > 0) {
+        // Prendre la consultation la plus récente
+        setLastConsultation(consultations[0]);
+      } else {
+        setLastConsultation(null);
+      }
+    } catch (err) {
+      console.error('Erreur chargement consultation:', err);
+      setLastConsultation(null);
+    }
+  };
+
+  // Imprimer l'ordonnance
+  const printOrdonnance = () => {
+    if (!currentPatient || !lastConsultation) return;
+    
+    const patient = currentPatient.ticket.patient;
+    const consultation = lastConsultation;
+    const prescriptions = consultation.prescriptions || [];
+    
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const calculateAge = (dob: string) => {
+      const birth = new Date(dob);
+      const today = new Date();
+      let age = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+      return age;
+    };
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Ordonnance - ${patient.lastName} ${patient.firstName}</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+    .header { text-align: center; border-bottom: 2px solid #1e40af; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #1e40af; margin: 0; font-size: 24px; }
+    .header p { color: #666; margin: 5px 0; }
+    .patient-info { background: #f3f4f6; padding: 15px; border-radius: 8px; margin-bottom: 30px; }
+    .patient-info h3 { margin: 0 0 10px 0; color: #333; }
+    .ordonnance-title { text-align: center; font-size: 20px; font-weight: bold; color: #1e40af; margin: 30px 0; text-transform: uppercase; letter-spacing: 2px; }
+    .prescription { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin-bottom: 15px; }
+    .prescription h4 { margin: 0 0 15px 0; color: #1e40af; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+    .prescription-item { margin: 10px 0; padding: 10px; background: #f9fafb; border-radius: 4px; }
+    .prescription-item strong { color: #333; }
+    .diagnosis { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+    .diagnosis h4 { margin: 0 0 10px 0; color: #92400e; }
+    .notes { background: #e0f2fe; border: 1px solid #0284c7; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+    .notes h4 { margin: 0 0 10px 0; color: #0369a1; }
+    .footer { margin-top: 50px; text-align: right; }
+    .footer .signature { border-top: 1px solid #333; width: 200px; margin-left: auto; padding-top: 10px; text-align: center; }
+    .date { text-align: right; color: #666; margin-bottom: 20px; }
+    @media print { body { padding: 20px; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🏥 CAMG-BOPP</h1>
+    <p>Dispensaire Ophtalmologique</p>
+    <p>Centre d'Appareillage et de Médecine Générale</p>
+  </div>
+
+  <div class="date">
+    Date: ${new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+  </div>
+
+  <div class="patient-info">
+    <h3>Patient: ${patient.lastName} ${patient.firstName}</h3>
+    <p>Âge: ${calculateAge(patient.dateOfBirth)} ans</p>
+    ${patient.phone ? `<p>Téléphone: ${patient.phone}</p>` : ''}
+  </div>
+
+  <div class="ordonnance-title">📋 Ordonnance Médicale</div>
+
+  ${consultation.diagnosis ? `
+  <div class="diagnosis">
+    <h4>🔍 Diagnostic</h4>
+    <p>${consultation.diagnosis}</p>
+  </div>
+  ` : ''}
+
+  ${prescriptions.length > 0 ? `
+  <div class="prescription">
+    <h4>💊 Prescriptions</h4>
+    ${prescriptions.map((p, i) => `
+      <div class="prescription-item">
+        <strong>${i + 1}. ${p.eyeType === 'OD' ? 'Œil Droit (OD)' : 'Œil Gauche (OG)'}</strong>
+        <ul>
+          ${p.sphere !== undefined ? `<li>Sphère: ${p.sphere > 0 ? '+' : ''}${p.sphere}</li>` : ''}
+          ${p.cylinder !== undefined ? `<li>Cylindre: ${p.cylinder}</li>` : ''}
+          ${p.axis !== undefined ? `<li>Axe: ${p.axis}°</li>` : ''}
+          ${p.addition !== undefined ? `<li>Addition: +${p.addition}</li>` : ''}
+          ${p.lensType ? `<li>Type de verre: ${p.lensType}</li>` : ''}
+          ${p.coating ? `<li>Traitement: ${p.coating}</li>` : ''}
+          ${p.medication ? `<li>Médicament: ${p.medication}</li>` : ''}
+          ${p.dosage ? `<li>Posologie: ${p.dosage}</li>` : ''}
+          ${p.duration ? `<li>Durée: ${p.duration}</li>` : ''}
+          ${p.notes ? `<li>Notes: ${p.notes}</li>` : ''}
+        </ul>
+      </div>
+    `).join('')}
+  </div>
+  ` : '<p style="text-align: center; color: #666;">Aucune prescription</p>'}
+
+  ${consultation.notes ? `
+  <div class="notes">
+    <h4>📝 Notes du médecin</h4>
+    <p>${consultation.notes}</p>
+  </div>
+  ` : ''}
+
+  <div class="footer">
+    <p>Médecin: Dr. ${consultation.doctor?.lastName || ''} ${consultation.doctor?.firstName || ''}</p>
+    <div class="signature">Signature</div>
+  </div>
+</body>
+</html>`;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => printWindow.print();
   };
 
   // Marquer absent
@@ -367,6 +507,70 @@ export default function MedicamentsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Ordonnance du médecin */}
+                {lastConsultation && (
+                  <div className="bg-blue-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-blue-900 flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Ordonnance du Médecin
+                      </h4>
+                      <Button onClick={printOrdonnance} size="sm" variant="secondary">
+                        <Printer className="w-4 h-4 mr-2" />
+                        Imprimer
+                      </Button>
+                    </div>
+                    
+                    {lastConsultation.diagnosis && (
+                      <div className="mb-4 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                        <p className="text-sm font-medium text-yellow-800">Diagnostic:</p>
+                        <p className="text-yellow-900">{lastConsultation.diagnosis}</p>
+                      </div>
+                    )}
+
+                    {lastConsultation.prescriptions && lastConsultation.prescriptions.length > 0 ? (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-blue-800">Prescriptions:</p>
+                        {lastConsultation.prescriptions.map((p, i) => (
+                          <div key={i} className={`p-3 rounded-lg ${p.eyeType === 'OD' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                            <p className="font-medium text-sm mb-2">
+                              {p.eyeType === 'OD' ? '👁️ Œil Droit (OD)' : '👁️ Œil Gauche (OG)'}
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              {p.sphere !== undefined && <span>Sphère: {p.sphere > 0 ? '+' : ''}{p.sphere}</span>}
+                              {p.cylinder !== undefined && <span>Cylindre: {p.cylinder}</span>}
+                              {p.axis !== undefined && <span>Axe: {p.axis}°</span>}
+                              {p.addition !== undefined && <span>Addition: +{p.addition}</span>}
+                              {p.lensType && <span>Verre: {p.lensType}</span>}
+                              {p.coating && <span>Traitement: {p.coating}</span>}
+                              {p.medication && <span>💊 {p.medication}</span>}
+                              {p.dosage && <span>Posologie: {p.dosage}</span>}
+                              {p.duration && <span>Durée: {p.duration}</span>}
+                            </div>
+                            {p.notes && <p className="text-xs text-gray-600 mt-2">Note: {p.notes}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-center py-4">Aucune prescription</p>
+                    )}
+
+                    {lastConsultation.notes && (
+                      <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Notes du médecin:</p>
+                        <p className="text-gray-600 text-sm">{lastConsultation.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {!lastConsultation && (
+                  <div className="bg-gray-50 rounded-xl p-6 text-center text-gray-500">
+                    <FileText className="w-12 h-12 mx-auto mb-2 text-gray-300" />
+                    <p>Aucune consultation trouvée pour ce patient</p>
+                  </div>
+                )}
 
                 {/* Checklist médicaments */}
                 <div className="bg-gray-50 rounded-xl p-6">

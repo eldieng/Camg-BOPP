@@ -33,9 +33,10 @@ export class AppointmentController {
 
       // Filtrer par date unique
       if (date) {
-        const targetDate = new Date(date as string);
-        const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 0, 0, 0);
-        const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate(), 23, 59, 59);
+        // Utiliser la date comme string pour éviter les problèmes de timezone
+        const dateStr = date as string; // format YYYY-MM-DD
+        const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
+        const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
         where.scheduledDate = { gte: startOfDay, lte: endOfDay };
       }
 
@@ -141,10 +142,13 @@ export class AppointmentController {
         return;
       }
 
+      // Créer la date en UTC pour éviter les problèmes de timezone
+      const dateOnly = new Date(`${scheduledDate}T12:00:00.000Z`);
+      
       const appointment = await prisma.appointment.create({
         data: {
           patientId,
-          scheduledDate: new Date(scheduledDate),
+          scheduledDate: dateOnly,
           scheduledTime,
           reason: reason || 'Consultation',
           notes,

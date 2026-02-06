@@ -9,11 +9,11 @@ import { tokenBlacklist } from '../services/tokenBlacklist.service.js';
  * Middleware d'authentification
  * Vérifie la présence et la validité du token JWT
  */
-export function authenticate(
+export async function authenticate(
   req: AuthenticatedRequest,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const token = extractTokenFromHeader(req.headers.authorization);
 
   if (!token) {
@@ -22,7 +22,8 @@ export function authenticate(
   }
 
   // Vérifier si le token est blacklisté (déconnexion)
-  if (tokenBlacklist.isBlacklisted(token)) {
+  const isBlacklisted = await tokenBlacklist.isBlacklisted(token);
+  if (isBlacklisted) {
     sendError(res, ErrorCodes.UNAUTHORIZED, 'Session expirée. Veuillez vous reconnecter.', 401);
     return;
   }

@@ -1,7 +1,21 @@
 import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../types/index.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_in_production';
+// Vérification de sécurité du JWT_SECRET
+const JWT_SECRET: string = process.env.JWT_SECRET || '';
+
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET est requis. Définissez-le dans le fichier .env');
+}
+
+if (process.env.NODE_ENV === 'production') {
+  if (JWT_SECRET.length < 32) {
+    throw new Error('JWT_SECRET doit faire au moins 32 caractères en production');
+  }
+  if (JWT_SECRET.includes('CHANGEZ_MOI') || JWT_SECRET.includes('default')) {
+    throw new Error('JWT_SECRET par défaut détecté. Changez-le en production!');
+  }
+}
 
 /**
  * Génère un token JWT

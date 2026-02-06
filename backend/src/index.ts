@@ -3,22 +3,38 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import { startQueueCleanupJob } from './jobs/queueCleanup.job.js';
+import { startArchivingJob } from './jobs/archiving.job.js';
+import { forceHttps, securityHeaders, additionalSecurityHeaders } from './middleware/security.js';
+import { apiLimiter } from './middleware/rateLimiter.js';
 
 // Charger les variables d'environnement
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isProduction = process.env.NODE_ENV === 'production';
 
-// Middlewares - CORS configuration (permissive for testing)
+// Middlewares de sécurité (en premier)
+app.use(forceHttps);
+if (isProduction) {
+  app.use(securityHeaders);
+}
+app.use(additionalSecurityHeaders);
+
+// Rate limiting global
+app.use('/api', apiLimiter);
+
+// CORS configuration
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: isProduction ? corsOrigin : true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes API
 app.use('/api', routes);
@@ -59,6 +75,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // Démarrage du serveur
 app.listen(PORT, () => {
   startQueueCleanupJob();
+  startArchivingJob();
   console.log('');
   console.log('🏥 ═══════════════════════════════════════════════════');
   console.log('   CAMG-BOPP - Système de Gestion des Patients');
@@ -70,6 +87,7 @@ app.listen(PORT, () => {
   console.log(`🔍 Health check: http://localhost:${PORT}/api/health`);
   console.log('');
   console.log(`📋 Mode: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`🔒 Sécurité: ${isProduction ? 'Production (HTTPS forcé)' : 'Développement'}`);
   console.log('═══════════════════════════════════════════════════════');
 });
 

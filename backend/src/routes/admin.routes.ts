@@ -37,4 +37,24 @@ router.post('/users/:id/toggle-status', (req, res) => adminController.toggleStat
 // DELETE /api/admin/users/:id
 router.delete('/users/:id', (req, res) => adminController.deleteUser(req, res));
 
+// ============================================
+// Routes de gestion de la base de données
+// ============================================
+
+// GET /api/admin/database/stats - Statistiques de la base de données
+router.get('/database/stats', (req, res) => adminController.getDatabaseStats(req, res));
+
+// POST /api/admin/database/archive - Lancer l'archivage manuel
+router.post('/database/archive', (req, res) => adminController.runArchiving(req, res));
+
+// ============================================
+// Routes de sécurité et audit
+// ============================================
+
+// GET /api/admin/audit-logs - Logs d'audit avec pagination
+router.get('/audit-logs', (req, res) => adminController.getAuditLogs(req, res));
+
+// GET /api/admin/security/failed-logins - Tentatives de connexion échouées
+router.get('/security/failed-logins', (req, res) => adminController.getFailedLogins(req, res));
+
 export default router;

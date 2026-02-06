@@ -2,6 +2,9 @@ import { Response } from 'express';
 import { body, param } from 'express-validator';
 import { AuthenticatedRequest } from '../types/index.js';
 import { adminService } from '../services/admin.service.js';
+import { archivingService } from '../services/archiving.service.js';
+import { auditLog } from '../services/auditLog.service.js';
+import { tokenBlacklist } from '../services/tokenBlacklist.service.js';
 import { sendSuccess, sendError, ErrorCodes } from '../utils/response.js';
 
 export const createUserValidation = [
@@ -139,6 +142,91 @@ export class AdminController {
       sendSuccess(res, stats);
     } catch (error) {
       console.error('Erreur stats utilisateurs:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
+    }
+  }
+
+  /**
+   * GET /api/admin/database/stats
+   * Statistiques de la base de données
+   */
+  async getDatabaseStats(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const stats = await archivingService.getDatabaseStats();
+      const auditLogsByPeriod = await archivingService.getAuditLogsByPeriod();
+      const blacklistSize = await tokenBlacklist.size();
+      
+      sendSuccess(res, {
+        tables: stats,
+        auditLogsByPeriod,
+        security: {
+          blacklistedTokens: blacklistSize,
+          usingRedis: tokenBlacklist.isUsingRedis(),
+        },
+      });
+    } catch (error) {
+      console.error('Erreur stats DB:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
+    }
+  }
+
+  /**
+   * POST /api/admin/database/archive
+   * Lancer l'archivage manuel
+   */
+  async runArchiving(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      // Log l'action
+      await auditLog.log({
+        action: 'USER_UPDATE',
+        userId: req.user?.id,
+        entity: 'SYSTEM',
+        details: { action: 'MANUAL_ARCHIVING' },
+      });
+
+      const results = await archivingService.runFullArchive();
+      sendSuccess(res, results, 200, 'Archivage terminé');
+    } catch (error) {
+      console.error('Erreur archivage:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de l\'archivage', 500);
+    }
+  }
+
+  /**
+   * GET /api/admin/audit-logs
+   * Récupérer les logs d'audit avec pagination
+   */
+  async getAuditLogs(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { userId, action, startDate, endDate, limit = '100', offset = '0' } = req.query;
+      
+      const result = await auditLog.getLogs({
+        userId: userId as string,
+        action: action as any,
+        startDate: startDate ? new Date(startDate as string) : undefined,
+        endDate: endDate ? new Date(endDate as string) : undefined,
+        limit: parseInt(limit as string, 10),
+        offset: parseInt(offset as string, 10),
+      });
+      
+      sendSuccess(res, result);
+    } catch (error) {
+      console.error('Erreur audit logs:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
+    }
+  }
+
+  /**
+   * GET /api/admin/security/failed-logins
+   * Récupérer les tentatives de connexion échouées
+   */
+  async getFailedLogins(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const hours = parseInt(req.query.hours as string, 10) || 24;
+      const failedLogins = await auditLog.getFailedLogins(hours);
+      sendSuccess(res, failedLogins);
+    } catch (error) {
+      console.error('Erreur failed logins:', error);
       sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
     }
   }

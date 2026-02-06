@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import routes from './routes/index.js';
 import { startQueueCleanupJob } from './jobs/queueCleanup.job.js';
 import { startArchivingJob } from './jobs/archiving.job.js';
+import { startKeepAliveJob } from './jobs/keepAlive.job.js';
 import { forceHttps, securityHeaders, additionalSecurityHeaders } from './middleware/security.js';
 import { apiLimiter } from './middleware/rateLimiter.js';
 
@@ -76,6 +77,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 app.listen(PORT, () => {
   startQueueCleanupJob();
   startArchivingJob();
+  startKeepAliveJob();
   console.log('');
   console.log('🏥 ═══════════════════════════════════════════════════');
   console.log('   CAMG-BOPP - Système de Gestion des Patients');

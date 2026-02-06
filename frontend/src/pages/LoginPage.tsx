@@ -1,8 +1,9 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, LogIn } from 'lucide-react';
+import { Eye, EyeOff, LogIn, Loader2, Server } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Button, Input, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
+import { warmUpServer } from '../services/api';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -13,6 +14,13 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [serverStatus, setServerStatus] = useState<'waking' | 'ready' | 'error'>('waking');
+
+  useEffect(() => {
+    warmUpServer().then((ok) => {
+      setServerStatus(ok ? 'ready' : 'error');
+    });
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -48,6 +56,18 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {serverStatus === 'waking' && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Connexion au serveur en cours...
+                </div>
+              )}
+              {serverStatus === 'error' && (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-yellow-700 text-sm flex items-center gap-2">
+                  <Server className="w-4 h-4" />
+                  Le serveur met du temps à répondre. Veuillez patienter.
+                </div>
+              )}
               {error && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
                   {error}
@@ -91,9 +111,10 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full"
                 isLoading={isLoading}
+                disabled={serverStatus === 'waking'}
                 leftIcon={<LogIn className="w-5 h-5" />}
               >
-                Se connecter
+                {serverStatus === 'waking' ? 'Connexion au serveur...' : 'Se connecter'}
               </Button>
             </form>
           </CardContent>

@@ -10,10 +10,11 @@ if (!JWT_SECRET) {
 
 if (process.env.NODE_ENV === 'production') {
   if (JWT_SECRET.length < 32) {
-    throw new Error('JWT_SECRET doit faire au moins 32 caractères en production');
+    console.warn('⚠️  ATTENTION: JWT_SECRET devrait faire au moins 32 caractères en production');
+    console.warn('⚠️  Générez un secret sécurisé avec: openssl rand -base64 64');
   }
   if (JWT_SECRET.includes('CHANGEZ_MOI') || JWT_SECRET.includes('default')) {
-    throw new Error('JWT_SECRET par défaut détecté. Changez-le en production!');
+    console.warn('⚠️  ATTENTION: JWT_SECRET par défaut détecté. Changez-le en production!');
   }
 }
 

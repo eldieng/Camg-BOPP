@@ -71,6 +71,19 @@ export default function PatientsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Validation date de naissance
+    if (!formData.dateOfBirth) {
+      setError('La date de naissance est obligatoire');
+      return;
+    }
+    const birthDate = new Date(formData.dateOfBirth);
+    const today = new Date();
+    if (birthDate > today) {
+      setError('La date de naissance ne peut pas être dans le futur');
+      return;
+    }
+
     try {
       if (editingPatient) {
         await patientService.update(editingPatient.id, formData);
@@ -279,7 +292,7 @@ export default function PatientsPage() {
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <Input label="Prénom *" value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} required />
                 <Input label="Nom *" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
-                <Input type="date" label="Date de naissance *" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required />
+                <Input type="date" label="Date de naissance *" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required max={new Date().toISOString().split('T')[0]} min="1900-01-01" />
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>

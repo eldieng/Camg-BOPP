@@ -24,7 +24,20 @@ export const createPatientValidation = [
     .notEmpty()
     .withMessage('La date de naissance est requise')
     .isISO8601()
-    .withMessage('Format de date invalide'),
+    .withMessage('Format de date invalide')
+    .custom((value) => {
+      const date = new Date(value);
+      const today = new Date();
+      today.setHours(23, 59, 59, 999);
+      if (date > today) {
+        throw new Error('La date de naissance ne peut pas être dans le futur');
+      }
+      const minDate = new Date('1900-01-01');
+      if (date < minDate) {
+        throw new Error('La date de naissance ne peut pas être avant 1900');
+      }
+      return true;
+    }),
   body('gender')
     .notEmpty()
     .withMessage('Le genre est requis')

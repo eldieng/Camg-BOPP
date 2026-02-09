@@ -72,6 +72,19 @@ export default function AccueilPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    // Validation date de naissance
+    if (!formData.dateOfBirth) {
+      setError('La date de naissance est obligatoire');
+      return;
+    }
+    const birthDate = new Date(formData.dateOfBirth);
+    const today = new Date();
+    if (birthDate > today) {
+      setError('La date de naissance ne peut pas être dans le futur');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -190,7 +203,7 @@ export default function AccueilPage() {
                   <Input label="Nom *" value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} required />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <Input type="date" label="Date de naissance *" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required />
+                  <Input type="date" label="Date de naissance *" value={formData.dateOfBirth} onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })} required max={new Date().toISOString().split('T')[0]} min="1900-01-01" />
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Genre *</label>
                     <select className="w-full px-3 sm:px-4 py-2 border border-gray-300 rounded-lg text-base" value={formData.gender} onChange={(e) => setFormData({ ...formData, gender: e.target.value as 'MALE' | 'FEMALE' })}>

@@ -9,6 +9,7 @@ import statsRoutes from './stats.routes.js';
 import adminRoutes from './admin.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import reportRoutes from './report.routes.js';
+import surgeryRoutes from './surgery.routes.js';
 
 const router = Router();
 
@@ -41,6 +42,9 @@ router.use('/appointments', appointmentRoutes);
 
 // Routes rapports
 router.use('/reports', reportRoutes);
+
+// Routes bloc opératoire
+router.use('/surgery', surgeryRoutes);
 
 // Route de santé
 router.get('/health', (_req, res) => {

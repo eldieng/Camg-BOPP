@@ -20,6 +20,7 @@ enum UserRole {
   MEDECIN
   LUNETTES
   MEDICAMENTS
+  BLOC
   ADMIN
 }
 
@@ -50,6 +51,56 @@ enum Station {
   CONSULTATION
   LUNETTES
   MEDICAMENTS
+  BLOC_OPERATOIRE
+}
+
+enum AnalysisStatus {
+  PRESCRIBED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AnalysisType {
+  GLYCEMIE
+  TENSION_ARTERIELLE
+  RADIOLOGIE
+  ECHOGRAPHIE
+  BILAN_SANGUIN
+  NFS
+  GROUPE_SANGUIN
+  BIOCHIMIE
+  AUTRE
+}
+
+enum SurgeryStatus {
+  WAITING_ANALYSIS
+  ANALYSIS_COMPLETE
+  ELIGIBLE
+  NOT_ELIGIBLE
+  SCHEDULED
+  PRE_OP
+  IN_SURGERY
+  POST_OP
+  COMPLETED
+  CANCELLED
+}
+
+enum SurgeryType {
+  CATARACTE
+  GLAUCOME
+  PTERYGION
+  STRABISME
+  DECOLLEMENT_RETINE
+  GREFFE_CORNEE
+  LASER
+  AUTRE
+}
+
+enum OperatedEye {
+  OD
+  OG
+  LES_DEUX
 }
 
 enum QueueStatus {
@@ -84,6 +135,7 @@ model User {
 
   consultations Consultation[] @relation("DoctorConsultations")
   visionTests   VisionTest[]   @relation("TechnicianTests")
+  surgeriesAsSurgeon Surgery[]  @relation("SurgeonSurgeries")
 
   @@map("users")
 }
@@ -107,6 +159,8 @@ model Patient {
   visionTests   VisionTest[]
   consultations Consultation[]
   appointments  Appointment[]
+  labAnalyses   LabAnalysis[]
+  surgeries     Surgery[]
 
   @@index([lastName, firstName])
   @@index([phone])
@@ -200,6 +254,8 @@ model Consultation {
   patient       Patient        @relation(fields: [patientId], references: [id])
   doctor        User           @relation("DoctorConsultations", fields: [doctorId], references: [id])
   prescriptions Prescription[]
+  labAnalyses   LabAnalysis[]
+  surgeries     Surgery[]
 
   @@index([patientId])
   @@index([doctorId])
@@ -265,6 +321,97 @@ model DailyStats {
   updatedAt             DateTime @updatedAt
 
   @@map("daily_stats")
+}
+
+// ============================================
+// BLOC OPÉRATOIRE
+// ============================================
+
+model LabAnalysis {
+  id               String         @id @default(uuid())
+  patientId        String
+  consultationId   String?
+  type             AnalysisType
+  customType       String?        // Si type = AUTRE
+  status           AnalysisStatus @default(PRESCRIBED)
+  prescribedDate   DateTime       @default(now())
+  completedDate    DateTime?
+  results          String?        // Résultats textuels
+  resultValue      Float?         // Valeur numérique si applicable
+  normalRange      String?        // Plage normale (ex: "0.7 - 1.1 g/L")
+  isNormal         Boolean?       // Résultat dans la norme ?
+  notes            String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  consultation Consultation? @relation(fields: [consultationId], references: [id])
+  surgery      Surgery?      @relation
+
+  @@index([patientId])
+  @@index([status])
+  @@index([consultationId])
+  @@map("lab_analyses")
+}
+
+model Surgery {
+  id               String        @id @default(uuid())
+  patientId        String
+  consultationId   String?
+  surgeonId        String?
+  type             SurgeryType
+  customType       String?       // Si type = AUTRE
+  operatedEye      OperatedEye?
+  status           SurgeryStatus @default(WAITING_ANALYSIS)
+  scheduledDate    DateTime?
+  scheduledTime    String?
+  actualStartTime  DateTime?
+  actualEndTime    DateTime?
+  anesthesiaType   String?       // Locale, générale, etc.
+  diagnosis        String?       // Diagnostic pré-opératoire
+  operativeNotes   String?       // Notes per-opératoires
+  complications    String?       // Complications éventuelles
+  consentSigned    Boolean       @default(false)
+  preOpChecklist   Json?         // Check-list pré-opératoire
+  analysisId       String?       @unique // Lien vers l'analyse requise
+  notes            String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  consultation Consultation? @relation(fields: [consultationId], references: [id])
+  surgeon      User?         @relation("SurgeonSurgeries", fields: [surgeonId], references: [id])
+  analysis     LabAnalysis?  @relation(fields: [analysisId], references: [id])
+  followUps    PostOpFollowUp[]
+
+  @@index([patientId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@index([surgeonId])
+  @@map("surgeries")
+}
+
+model PostOpFollowUp {
+  id          String   @id @default(uuid())
+  surgeryId   String
+  dayNumber   Int      // J+1, J+7, J+30
+  scheduledDate DateTime?
+  actualDate  DateTime?
+  visualAcuity String? // Acuité visuelle post-op
+  intraocularPressure Float?
+  woundStatus  String? // État de la cicatrice
+  complications String?
+  treatment    String? // Traitement prescrit
+  notes        String?
+  isCompleted  Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  surgery Surgery @relation(fields: [surgeryId], references: [id])
+
+  @@index([surgeryId])
+  @@index([scheduledDate])
+  @@map("post_op_follow_ups")
 }
 
 model AuditLog {

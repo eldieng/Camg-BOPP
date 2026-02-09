@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   Calendar,
+  Scissors,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -75,6 +76,12 @@ const navItems: NavItem[] = [
     roles: ['MEDICAMENTS', 'ADMIN'],
   },
   {
+    label: 'Bloc Opératoire',
+    path: '/bloc-operatoire',
+    icon: <Scissors className="w-5 h-5" />,
+    roles: ['MEDECIN', 'BLOC', 'ADMIN'],
+  },
+  {
     label: 'Statistiques',
     path: '/stats',
     icon: <BarChart3 className="w-5 h-5" />,
@@ -115,6 +122,7 @@ export default function MainLayout() {
       TEST_VUE: { label: 'Test Vue', color: 'bg-green-100 text-green-800' },
       LUNETTES: { label: 'Lunettes', color: 'bg-purple-100 text-purple-800' },
       MEDICAMENTS: { label: 'Médicaments', color: 'bg-teal-100 text-teal-800' },
+      BLOC: { label: 'Bloc Op.', color: 'bg-orange-100 text-orange-800' },
       ACCUEIL: { label: 'Accueil', color: 'bg-yellow-100 text-yellow-800' },
     };
     return badges[role];

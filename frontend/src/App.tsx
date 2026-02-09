@@ -17,6 +17,7 @@ import LunettesPage from './pages/LunettesPage';
 import MedicamentsPage from './pages/MedicamentsPage';
 import PatientHistoryPage from './pages/PatientHistoryPage';
 import ReportsPage from './pages/ReportsPage';
+import BlocOperatoirePage from './pages/BlocOperatoirePage';
 import TicketVerifyPage from './pages/TicketVerifyPage';
 
 function App() {
@@ -105,6 +106,13 @@ function App() {
             <Route path="reports" element={
               <ProtectedRoute allowedRoles={['ADMIN']}>
                 <ReportsPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Module Bloc Opératoire */}
+            <Route path="bloc-operatoire" element={
+              <ProtectedRoute allowedRoles={['MEDECIN', 'BLOC', 'ADMIN']}>
+                <BlocOperatoirePage />
               </ProtectedRoute>
             } />
           </Route>

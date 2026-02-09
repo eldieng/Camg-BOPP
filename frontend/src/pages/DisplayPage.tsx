@@ -286,10 +286,10 @@ export default function DisplayPage() {
     return () => clearInterval(timer);
   }, []);
 
-  // Charger les données toutes les 3 secondes pour une mise à jour plus rapide
+  // Charger les données toutes les 10 secondes
   useEffect(() => {
     loadQueues();
-    const interval = setInterval(loadQueues, 3000);
+    const interval = setInterval(loadQueues, 10000);
     return () => clearInterval(interval);
   }, []);
 

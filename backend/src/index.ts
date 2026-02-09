@@ -22,10 +22,7 @@ if (isProduction) {
 }
 app.use(additionalSecurityHeaders);
 
-// Rate limiting global
-app.use('/api', apiLimiter);
-
-// CORS configuration
+// CORS configuration (AVANT le rate limiter pour que les réponses 429 aient les headers CORS)
 const allowedOrigins = [
   'http://localhost:5173',
   'https://camg-bopp.netlify.app',
@@ -55,6 +52,9 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
+
+// Rate limiting global (après CORS)
+app.use('/api', apiLimiter);
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));

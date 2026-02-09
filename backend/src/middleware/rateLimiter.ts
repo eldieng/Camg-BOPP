@@ -19,7 +19,7 @@ export const authLimiter = rateLimit({
 // Rate limiter général pour l'API
 export const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 100, // 100 requêtes par minute
+  max: 200, // 200 requêtes par minute (augmenté pour le polling display)
   message: {
     success: false,
     error: {

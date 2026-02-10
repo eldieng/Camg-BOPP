@@ -1,6 +1,24 @@
 import prisma from '../lib/prisma.js';
 import { AnalysisStatus, AnalysisType, SurgeryStatus, SurgeryType, OperatedEye } from '@prisma/client';
 
+// Labels pour générer le motif du RDV
+const surgeryTypeLabels: Record<string, string> = {
+  CATARACTE: 'Cataracte',
+  GLAUCOME: 'Glaucome',
+  PTERYGION: 'Ptérygion',
+  STRABISME: 'Strabisme',
+  DECOLLEMENT_RETINE: 'Décollement rétine',
+  GREFFE_CORNEE: 'Greffe cornée',
+  LASER: 'Laser',
+  AUTRE: 'Autre',
+};
+
+const eyeLabelsMap: Record<string, string> = {
+  OD: 'Œil droit',
+  OG: 'Œil gauche',
+  LES_DEUX: 'Les deux yeux',
+};
+
 // ============================================
 // DTOs
 // ============================================
@@ -244,11 +262,31 @@ export class SurgeryService {
       updateData.actualEndTime = new Date();
     }
 
-    return prisma.surgery.update({
+    const surgery = await prisma.surgery.update({
       where: { id },
       data: updateData,
       include: surgeryInclude,
     });
+
+    // Quand une opération est planifiée, créer automatiquement un RDV visible par l'accueil
+    if (data.status === 'SCHEDULED' && data.scheduledDate) {
+      const typeLabel = surgeryTypeLabels[surgery.type] || surgery.customType || 'Opération';
+      const eyeLabel = surgery.operatedEye ? eyeLabelsMap[surgery.operatedEye] || '' : '';
+      const reason = `Opération - ${typeLabel}${eyeLabel ? ' (' + eyeLabel + ')' : ''}`;
+
+      await prisma.appointment.create({
+        data: {
+          patientId: surgery.patientId,
+          scheduledDate: new Date(data.scheduledDate),
+          scheduledTime: data.scheduledTime || '08:00',
+          reason,
+          status: 'SCHEDULED',
+          notes: `Bloc opératoire - Anesthésie: ${surgery.anesthesiaType || 'Non défini'}`,
+        },
+      });
+    }
+
+    return surgery;
   }
 
   async getSurgeriesByPatient(patientId: string) {

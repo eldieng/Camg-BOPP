@@ -2,7 +2,7 @@ import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { useOffline } from '../../hooks/useOffline';
 
 export function NetworkStatus() {
-  const { isOnline, pendingCount, lastSync } = useOffline();
+  const { isOnline, pendingCount } = useOffline();
 
   if (isOnline && pendingCount === 0) {
     return null; // Ne rien afficher si tout va bien

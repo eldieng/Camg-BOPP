@@ -288,7 +288,11 @@ export default function MedicamentsPage() {
         setOrdonnanceSaved(false);
         setLastConsultation(null);
         loadQueue();
-        loadTodayAppointments();
+        // Refresh appointments list
+        try {
+          const apptResponse = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/appointments/today`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
+          if (apptResponse.ok) { const apptData = await apptResponse.json(); setTodayAppointments(apptData.data || []); }
+        } catch { /* ignore */ }
       } else {
         const data = await response.json();
         setError(data.error?.message || 'Erreur lors de la création du rendez-vous');

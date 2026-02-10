@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Stethoscope, Phone, Check, UserX, RefreshCw, Plus, Trash2, Download, ArrowLeft, Pill } from 'lucide-react';
+import { Stethoscope, Phone, Check, UserX, RefreshCw, Plus, Trash2, Download, ArrowLeft, Pill, Scissors, X } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, CreateConsultationDto, CreatePrescriptionDto, PatientHistory } from '../services/consultation.service';
 import { visionTestService } from '../services/visionTest.service';
 import { reportService } from '../services/report.service';
+import {
+  surgeryService,
+  SurgeryType,
+  OperatedEye,
+  AnalysisType,
+  surgeryTypeLabels,
+  eyeLabels,
+  analysisTypeLabels,
+} from '../services/surgery.service';
 
 export default function ConsultationRoomPage() {
   const { roomNumber } = useParams<{ roomNumber: string }>();
@@ -20,6 +29,15 @@ export default function ConsultationRoomPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [activeTab, setActiveTab] = useState<'consultation' | 'history'>('consultation');
+
+  const [showBlocModal, setShowBlocModal] = useState(false);
+  const [blocForm, setBlocForm] = useState({
+    type: 'CATARACTE' as SurgeryType,
+    customType: '',
+    operatedEye: 'OD' as OperatedEye,
+    anesthesiaType: 'Locale',
+    analyses: [] as AnalysisType[],
+  });
 
   const [formData, setFormData] = useState<CreateConsultationDto>({
     patientId: '', chiefComplaint: '', diagnosis: '', notes: '',
@@ -123,6 +141,53 @@ export default function ConsultationRoomPage() {
 
   const removePrescription = (index: number) => {
     setFormData(prev => ({ ...prev, prescriptions: prev.prescriptions?.filter((_, i) => i !== index) }));
+  };
+
+  const handleSendToBloc = async () => {
+    if (!currentPatient) return;
+    setError('');
+    setSuccess('');
+    setIsLoading(true);
+    try {
+      // 1. Sauvegarder la consultation
+      const consultation = await consultationService.create({ ...formData, queueEntryId: currentPatient.id });
+
+      // 2. Créer l'opération
+      await surgeryService.createSurgery({
+        patientId: currentPatient.ticket.patient.id,
+        consultationId: consultation.id,
+        type: blocForm.type,
+        customType: blocForm.type === 'AUTRE' ? blocForm.customType : undefined,
+        operatedEye: blocForm.operatedEye,
+        diagnosis: formData.diagnosis || undefined,
+        anesthesiaType: blocForm.anesthesiaType,
+      });
+
+      // 3. Prescrire les analyses si sélectionnées
+      if (blocForm.analyses.length > 0) {
+        await surgeryService.createMultipleAnalyses({
+          patientId: currentPatient.ticket.patient.id,
+          consultationId: consultation.id,
+          types: blocForm.analyses,
+        });
+      }
+
+      // 4. Terminer le service
+      await queueService.completeService(currentPatient.id);
+
+      setSuccess(`Patient envoyé au Bloc Opératoire - ${blocForm.analyses.length} analyse(s) prescrite(s)`);
+      setShowBlocModal(false);
+      setCurrentPatient(null);
+      setPatientHistory(null);
+      setFormData({ patientId: '', chiefComplaint: '', diagnosis: '', notes: '', intraocularPressureOD: undefined, intraocularPressureOG: undefined, prescriptions: [] });
+      setBlocForm({ type: 'CATARACTE', customType: '', operatedEye: 'OD', anesthesiaType: 'Locale', analyses: [] });
+      setTimeout(() => setSuccess(''), 4000);
+      loadQueue();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (nextStation: 'LUNETTES' | 'MEDICAMENTS' | null = null) => {
@@ -396,10 +461,88 @@ export default function ConsultationRoomPage() {
                         Envoyer aux Médicaments
                       </Button>
                     </div>
+                    <Button type="button" className="w-full bg-orange-600 hover:bg-orange-700 text-white" isLoading={isLoading} onClick={() => setShowBlocModal(true)} leftIcon={<Scissors className="w-5 h-5" />}>
+                      Envoyer au Bloc Opératoire
+                    </Button>
                     <Button type="button" variant="secondary" className="w-full" isLoading={isLoading} onClick={() => handleSubmit(null)} leftIcon={<Check className="w-5 h-5" />}>
                       Terminer (sans transfert)
                     </Button>
                   </div>
+
+                  {/* Modal Bloc Opératoire */}
+                  {showBlocModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                        <div className="flex justify-between items-center p-4 border-b bg-orange-50">
+                          <h3 className="text-lg font-bold text-orange-800 flex items-center gap-2">
+                            <Scissors className="w-5 h-5" /> Bloc Opératoire
+                          </h3>
+                          <button onClick={() => setShowBlocModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+                        </div>
+                        <div className="p-4 space-y-4">
+                          <p className="text-sm text-gray-600">Patient: <strong>{currentPatient?.ticket.patient.lastName} {currentPatient?.ticket.patient.firstName}</strong></p>
+
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Type d'opération *</label>
+                              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={blocForm.type} onChange={(e) => setBlocForm({ ...blocForm, type: e.target.value as SurgeryType })}>
+                                {(Object.entries(surgeryTypeLabels) as [SurgeryType, string][]).map(([t, l]) => (
+                                  <option key={t} value={t}>{l}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Œil opéré</label>
+                              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={blocForm.operatedEye} onChange={(e) => setBlocForm({ ...blocForm, operatedEye: e.target.value as OperatedEye })}>
+                                {(Object.entries(eyeLabels) as [OperatedEye, string][]).map(([e, l]) => (
+                                  <option key={e} value={e}>{l}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          {blocForm.type === 'AUTRE' && (
+                            <Input label="Préciser le type" value={blocForm.customType} onChange={(e) => setBlocForm({ ...blocForm, customType: e.target.value })} />
+                          )}
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Anesthésie</label>
+                            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={blocForm.anesthesiaType} onChange={(e) => setBlocForm({ ...blocForm, anesthesiaType: e.target.value })}>
+                              <option value="Locale">Locale</option>
+                              <option value="Générale">Générale</option>
+                              <option value="Locorégionale">Locorégionale</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Analyses à prescrire</label>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {(Object.entries(analysisTypeLabels) as [AnalysisType, string][]).map(([type, label]) => (
+                                <label key={type} className={`flex items-center p-2 rounded border cursor-pointer text-sm ${
+                                  blocForm.analyses.includes(type) ? 'bg-orange-50 border-orange-300' : 'hover:bg-gray-50'
+                                }`}>
+                                  <input type="checkbox" checked={blocForm.analyses.includes(type)} onChange={(e) => {
+                                    if (e.target.checked) setBlocForm({ ...blocForm, analyses: [...blocForm.analyses, type] });
+                                    else setBlocForm({ ...blocForm, analyses: blocForm.analyses.filter(a => a !== type) });
+                                  }} className="mr-2" />
+                                  {label}
+                                </label>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 pt-2">
+                            <Button onClick={handleSendToBloc} isLoading={isLoading} className="flex-1 bg-orange-600 hover:bg-orange-700">
+                              Confirmer
+                            </Button>
+                            <Button variant="secondary" onClick={() => setShowBlocModal(false)} className="flex-1">
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

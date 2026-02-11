@@ -46,7 +46,8 @@ export default function TicketVerifyPage() {
   useEffect(() => {
     const verifyTicket = async () => {
       try {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+        const isProduction = window.location.hostname.includes('netlify.app');
+        const apiUrl = isProduction ? 'https://camg-bopp.onrender.com/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
         const response = await fetch(`${apiUrl}/tickets/verify/${qrCode}`);
         const data = await response.json();
         

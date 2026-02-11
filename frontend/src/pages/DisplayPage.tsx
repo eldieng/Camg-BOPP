@@ -120,7 +120,8 @@ export default function DisplayPage() {
       for (const station of stations) {
         try {
           // Utiliser la route publique /display/ sans authentification
-          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+          const isProduction = window.location.hostname.includes('netlify.app');
+          const apiUrl = isProduction ? 'https://camg-bopp.onrender.com/api' : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
           const response = await fetch(`${apiUrl}/queue/display/${station}`);
           if (response.ok) {
             const data = await response.json();

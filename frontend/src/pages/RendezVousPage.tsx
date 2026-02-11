@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Calendar, Clock, Plus, Search, Check, X, AlertCircle, User } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { patientService, Patient } from '../services/patient.service';
+import { api } from '../services/api';
 
 interface Appointment {
   id: string;
@@ -55,27 +56,13 @@ export default function RendezVousPage() {
   const loadAppointments = async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      
-      let url = `${apiUrl}/appointments`;
-      if (viewMode === 'upcoming') {
-        url += '?upcoming=true';
-      } else if (selectedDate) {
-        url += `?date=${selectedDate}`;
-      }
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setAppointments(data.data || []);
-        }
+      const params: Record<string, string> = {};
+      if (viewMode === 'upcoming') params.upcoming = 'true';
+      else if (selectedDate) params.date = selectedDate;
+
+      const response = await api.get('/appointments', { params });
+      if (response.data.success) {
+        setAppointments(response.data.data || []);
       }
     } catch (err) {
       console.error('Erreur chargement rendez-vous:', err);
@@ -112,20 +99,12 @@ export default function RendezVousPage() {
     if (!selectedPatient) return;
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/appointments', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          patientId: selectedPatient.id,
-          ...formData,
-        }),
+      const response = await api.post('/appointments', {
+        patientId: selectedPatient.id,
+        ...formData,
       });
 
-      if (response.ok) {
+      if (response.data.success) {
         setShowCreateModal(false);
         setSelectedPatient(null);
         setSearchQuery('');
@@ -145,19 +124,8 @@ export default function RendezVousPage() {
   // Mettre à jour le statut
   const updateStatus = async (id: string, status: string) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3000/api/appointments/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status }),
-      });
-
-      if (response.ok) {
-        loadAppointments();
-      }
+      await api.put(`/appointments/${id}`, { status });
+      loadAppointments();
     } catch (err) {
       console.error('Erreur mise à jour:', err);
     }
@@ -166,21 +134,11 @@ export default function RendezVousPage() {
   // Convertir en ticket (patient arrivé)
   const convertToTicket = async (appointment: Appointment) => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Créer un ticket pour le patient
-      const response = await fetch('http://localhost:3000/api/tickets', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          patientId: appointment.patientId,
-        }),
+      const response = await api.post('/tickets', {
+        patientId: appointment.patientId,
       });
 
-      if (response.ok) {
+      if (response.data.success) {
         // Marquer le rendez-vous comme effectué
         await updateStatus(appointment.id, 'COMPLETED');
         alert(`Ticket créé pour ${appointment.patient.firstName} ${appointment.patient.lastName}`);

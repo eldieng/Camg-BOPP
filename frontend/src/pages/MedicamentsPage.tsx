@@ -3,6 +3,7 @@ import { Pill, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Calendar
 import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, Consultation } from '../services/consultation.service';
+import { api } from '../services/api';
 
 export default function MedicamentsPage() {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -51,19 +52,9 @@ export default function MedicamentsPage() {
   // Charger les RDV à venir
   const loadUpcomingAppointments = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/appointments?upcoming=true`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setTodayAppointments(data.data || []);
-        }
+      const response = await api.get('/appointments', { params: { upcoming: 'true' } });
+      if (response.data.success) {
+        setTodayAppointments(response.data.data || []);
       }
     } catch (err) {
       console.error('Erreur chargement RDV:', err);
@@ -261,23 +252,14 @@ export default function MedicamentsPage() {
     setIsLoading(true);
     try {
       // Créer le RDV d'abord
-      const token = localStorage.getItem('token');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-      const response = await fetch(`${apiUrl}/appointments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          patientId: currentPatient.ticket.patient.id,
-          scheduledDate: appointmentData.scheduledDate,
-          scheduledTime: appointmentData.scheduledTime,
-          reason: appointmentData.reason || 'Suivi traitement',
-        }),
+      const response = await api.post('/appointments', {
+        patientId: currentPatient.ticket.patient.id,
+        scheduledDate: appointmentData.scheduledDate,
+        scheduledTime: appointmentData.scheduledTime,
+        reason: appointmentData.reason || 'Suivi traitement',
       });
 
-      if (response.ok) {
+      if (response.data.success) {
         // Puis terminer le service
         await queueService.completeService(currentPatient.id);
         setSuccess(`Service terminé - RDV créé pour le ${new Date(appointmentData.scheduledDate).toLocaleDateString('fr-FR')}`);
@@ -290,12 +272,11 @@ export default function MedicamentsPage() {
         loadQueue();
         // Refresh appointments list
         try {
-          const apptResponse = await fetch(`${import.meta.env.VITE_API_URL || '/api'}/appointments/today`, { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } });
-          if (apptResponse.ok) { const apptData = await apptResponse.json(); setTodayAppointments(apptData.data || []); }
+          const apptResponse = await api.get('/appointments/today');
+          if (apptResponse.data.success) { setTodayAppointments(apptResponse.data.data || []); }
         } catch { /* ignore */ }
       } else {
-        const data = await response.json();
-        setError(data.error?.message || 'Erreur lors de la création du rendez-vous');
+        setError(response.data?.error?.message || 'Erreur lors de la création du rendez-vous');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur');

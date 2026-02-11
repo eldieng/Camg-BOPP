@@ -21,6 +21,7 @@ enum UserRole {
   LUNETTES
   MEDICAMENTS
   BLOC
+  PORTE
   ADMIN
 }
 
@@ -103,6 +104,14 @@ enum OperatedEye {
   LES_DEUX
 }
 
+enum GateEntryStatus {
+  EXPECTED       // Patient attendu (a un RDV)
+  ARRIVED        // Patient arrivé (coché par l'agent)
+  SENT_TO_ACCUEIL // Envoyé à l'accueil
+  REGISTERED     // Ticket créé par l'accueil
+  NO_SHOW        // Patient absent
+}
+
 enum QueueStatus {
   WAITING
   CALLED
@@ -161,6 +170,7 @@ model Patient {
   appointments  Appointment[]
   labAnalyses   LabAnalysis[]
   surgeries     Surgery[]
+  gateEntries   GateEntry[]
 
   @@index([lastName, firstName])
   @@index([phone])
@@ -300,11 +310,38 @@ model Appointment {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  patient Patient @relation(fields: [patientId], references: [id])
+  patient    Patient     @relation(fields: [patientId], references: [id])
+  gateEntry  GateEntry?
 
   @@index([scheduledDate])
   @@index([patientId])
   @@map("appointments")
+}
+
+model GateEntry {
+  id            String           @id @default(uuid())
+  patientId     String?
+  appointmentId String?          @unique
+  firstName     String           // Pré-rempli si patient existant
+  lastName      String
+  phone         String?
+  priority      Priority         @default(NORMAL)
+  status        GateEntryStatus  @default(EXPECTED)
+  arrivedAt     DateTime?
+  sentAt        DateTime?        // Quand envoyé à l'accueil
+  notes         String?
+  isWalkIn      Boolean          @default(false) // Patient sans RDV
+  date          DateTime         @default(now()) // Date du jour
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  patient     Patient?     @relation(fields: [patientId], references: [id])
+  appointment Appointment? @relation(fields: [appointmentId], references: [id])
+
+  @@index([date])
+  @@index([status])
+  @@index([patientId])
+  @@map("gate_entries")
 }
 
 model DailyStats {

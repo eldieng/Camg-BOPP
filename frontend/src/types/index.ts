@@ -1,5 +1,5 @@
 // Types utilisateur
-export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'MEDICAMENTS' | 'BLOC' | 'ADMIN';
+export type UserRole = 'ACCUEIL' | 'TEST_VUE' | 'MEDECIN' | 'LUNETTES' | 'MEDICAMENTS' | 'BLOC' | 'PORTE' | 'ADMIN';
 
 export interface User {
   id: string;

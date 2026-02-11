@@ -19,6 +19,7 @@ import PatientHistoryPage from './pages/PatientHistoryPage';
 import ReportsPage from './pages/ReportsPage';
 import BlocOperatoirePage from './pages/BlocOperatoirePage';
 import TicketVerifyPage from './pages/TicketVerifyPage';
+import GatePage from './pages/GatePage';
 
 function App() {
   return (
@@ -113,6 +114,13 @@ function App() {
             <Route path="bloc-operatoire" element={
               <ProtectedRoute allowedRoles={['MEDECIN', 'BLOC', 'ADMIN']}>
                 <BlocOperatoirePage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Porte d'entrée */}
+            <Route path="porte" element={
+              <ProtectedRoute allowedRoles={['PORTE', 'ACCUEIL', 'ADMIN']}>
+                <GatePage />
               </ProtectedRoute>
             } />
           </Route>

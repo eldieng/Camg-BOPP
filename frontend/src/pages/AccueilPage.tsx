@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { UserPlus, Ticket, Search, RefreshCw, Printer, X } from 'lucide-react';
+import { UserPlus, Ticket, Search, RefreshCw, Printer, X, DoorOpen } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Alert } from '../components/ui';
 import { patientService, Patient, CreatePatientDto } from '../services/patient.service';
 import { ticketService, Ticket as TicketType, TicketsSummary } from '../services/ticket.service';
 import TicketPrint from '../components/TicketPrint';
+import { gateService, GateEntry, priorityLabels, priorityIcons, priorityColors } from '../services/gate.service';
 import { QRCodeSVG } from 'qrcode.react';
 import QRCode from 'qrcode';
 
@@ -21,6 +22,9 @@ export default function AccueilPage() {
   const ticketPrintRef = useRef<HTMLDivElement>(null);
 
   // Formulaire nouveau patient
+  // Patients arrivés depuis la porte
+  const [arrivedPatients, setArrivedPatients] = useState<GateEntry[]>([]);
+
   const [formData, setFormData] = useState<CreatePatientDto>({
     firstName: '',
     lastName: '',
@@ -43,9 +47,19 @@ export default function AccueilPage() {
     }
   };
 
+  const loadArrivedPatients = async () => {
+    try {
+      const data = await gateService.getArrivedForAccueil();
+      setArrivedPatients(data);
+    } catch (err) {
+      console.error('Erreur chargement arrivées:', err);
+    }
+  };
+
   useEffect(() => {
     loadTickets();
-    const interval = setInterval(loadTickets, 30000); // Refresh toutes les 30s
+    loadArrivedPatients();
+    const interval = setInterval(() => { loadTickets(); loadArrivedPatients(); }, 15000);
     return () => clearInterval(interval);
   }, []);
 
@@ -172,6 +186,69 @@ export default function AccueilPage() {
             <p className="text-xl sm:text-2xl font-bold text-gray-800">{summary.cancelled}</p>
           </div>
         </div>
+      )}
+
+      {/* Patients arrivés depuis la porte */}
+      {arrivedPatients.length > 0 && (
+        <Card className="border-2 border-orange-300 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-800">
+              <DoorOpen className="w-5 h-5" />
+              Patients arrivés ({arrivedPatients.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {arrivedPatients.map((entry) => (
+                <div key={entry.id} className="flex items-center justify-between p-2 bg-white rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{entry.lastName} {entry.firstName}</span>
+                    {entry.priority !== 'NORMAL' && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-xs ${priorityColors[entry.priority]}`}>
+                        {priorityIcons[entry.priority]} {priorityLabels[entry.priority]}
+                      </span>
+                    )}
+                    {entry.appointment?.reason && (
+                      <span className="text-xs text-gray-500">{entry.appointment.reason}</span>
+                    )}
+                    {entry.isWalkIn && (
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded-full">Sans RDV</span>
+                    )}
+                  </div>
+                  <Button size="sm" onClick={async () => {
+                    // Si patient existant, passer en mode recherche et pré-sélectionner
+                    if (entry.patientId && entry.patient) {
+                      setActiveTab('search');
+                      setSelectedPatient({
+                        id: entry.patient.id,
+                        firstName: entry.patient.firstName,
+                        lastName: entry.patient.lastName,
+                        dateOfBirth: entry.patient.dateOfBirth,
+                        gender: entry.patient.gender as 'MALE' | 'FEMALE',
+                        phone: entry.patient.phone,
+                      } as Patient);
+                    } else {
+                      // Nouveau patient : pré-remplir le formulaire
+                      setActiveTab('new');
+                      setFormData(prev => ({
+                        ...prev,
+                        firstName: entry.firstName,
+                        lastName: entry.lastName,
+                        phone: entry.phone || '',
+                        isPregnant: entry.priority === 'PREGNANT',
+                        isDisabled: entry.priority === 'DISABLED',
+                      }));
+                    }
+                    // Marquer comme enregistré côté porte
+                    try { await gateService.markRegistered(entry.id); loadArrivedPatients(); } catch {}
+                  }} leftIcon={<Ticket className="w-3 h-3" />}>
+                    Créer ticket
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">

@@ -10,6 +10,7 @@ import adminRoutes from './admin.routes.js';
 import appointmentRoutes from './appointment.routes.js';
 import reportRoutes from './report.routes.js';
 import surgeryRoutes from './surgery.routes.js';
+import gateRoutes from './gate.routes.js';
 
 const router = Router();
 
@@ -45,6 +46,9 @@ router.use('/reports', reportRoutes);
 
 // Routes bloc opératoire
 router.use('/surgery', surgeryRoutes);
+
+// Routes porte d'entrée
+router.use('/gate', gateRoutes);
 
 // Route de santé
 router.get('/health', (_req, res) => {

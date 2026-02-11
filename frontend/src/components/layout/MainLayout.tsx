@@ -16,6 +16,7 @@ import {
   X,
   Calendar,
   Scissors,
+  DoorOpen,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -82,6 +83,12 @@ const navItems: NavItem[] = [
     roles: ['MEDECIN', 'BLOC', 'ADMIN'],
   },
   {
+    label: 'Porte d\'entrée',
+    path: '/porte',
+    icon: <DoorOpen className="w-5 h-5" />,
+    roles: ['PORTE', 'ACCUEIL', 'ADMIN'],
+  },
+  {
     label: 'Statistiques',
     path: '/stats',
     icon: <BarChart3 className="w-5 h-5" />,
@@ -123,6 +130,7 @@ export default function MainLayout() {
       LUNETTES: { label: 'Lunettes', color: 'bg-purple-100 text-purple-800' },
       MEDICAMENTS: { label: 'Médicaments', color: 'bg-teal-100 text-teal-800' },
       BLOC: { label: 'Bloc Op.', color: 'bg-orange-100 text-orange-800' },
+      PORTE: { label: 'Porte', color: 'bg-cyan-100 text-cyan-800' },
       ACCUEIL: { label: 'Accueil', color: 'bg-yellow-100 text-yellow-800' },
     };
     return badges[role];

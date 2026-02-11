@@ -2,6 +2,9 @@
   command = "echo 'Building CAMG-BOPP frontend...' && npm run build"
   publish = "dist"
 
+[build.environment]
+  VITE_API_URL = "https://camg-bopp-api.onrender.com/api"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

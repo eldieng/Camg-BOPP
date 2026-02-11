@@ -1,7 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiResponse } from '../types';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api'; // v2
+// Detect production: if running on netlify.app, use Render backend directly
+const isProduction = window.location.hostname.includes('netlify.app');
+const API_URL = isProduction
+  ? 'https://camg-bopp.onrender.com/api'
+  : (import.meta.env.VITE_API_URL || 'http://localhost:3000/api');
 
 // Instance Axios configurée
 export const api = axios.create({

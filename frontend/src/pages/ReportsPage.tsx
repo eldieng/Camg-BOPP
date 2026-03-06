@@ -91,6 +91,35 @@ export default function ReportsPage() {
       rows.push([`Station ${s.station} - Complétés`, s.completed.toString()]);
     });
     
+    // Parcours patient par station
+    if (stats.stationFlow) {
+      rows.push(['', '']);
+      rows.push(['=== PARCOURS PATIENT ===', '']);
+      rows.push(['Accueil - Tickets', stats.stationFlow.accueil.tickets.toString()]);
+      rows.push(['Accueil - Complétés', stats.stationFlow.accueil.completed.toString()]);
+      rows.push(['Test Vue - Total', stats.stationFlow.testVue.total.toString()]);
+      rows.push(['Test Vue - Complétés', stats.stationFlow.testVue.completed.toString()]);
+      rows.push(['Consultation - Total', stats.stationFlow.consultation.total.toString()]);
+      rows.push(['Consultation - Ordonnances', stats.stationFlow.consultation.withPrescriptions.toString()]);
+      rows.push(['Lunettes - Total', stats.stationFlow.lunettes.total.toString()]);
+      rows.push(['Lunettes - Complétés', stats.stationFlow.lunettes.completed.toString()]);
+      rows.push(['Médicaments - Total', stats.stationFlow.medicaments.total.toString()]);
+      rows.push(['Médicaments - Complétés', stats.stationFlow.medicaments.completed.toString()]);
+      rows.push(['Bloc Opératoire - Chirurgies', stats.stationFlow.blocOperatoire.surgeries.toString()]);
+      rows.push(['Bloc Opératoire - Analyses', stats.stationFlow.blocOperatoire.analyses.toString()]);
+      rows.push(['Bloc Opératoire - Complétés', stats.stationFlow.blocOperatoire.completed.toString()]);
+    }
+    
+    // Commandes de lunettes
+    if (stats.glassesOrders) {
+      rows.push(['', '']);
+      rows.push(['=== COMMANDES LUNETTES ===', '']);
+      rows.push(['Commandes - Total', stats.glassesOrders.total.toString()]);
+      rows.push(['Commandes - En attente', stats.glassesOrders.pending.toString()]);
+      rows.push(['Commandes - Prêtes', stats.glassesOrders.ready.toString()]);
+      rows.push(['Commandes - Livrées', stats.glassesOrders.delivered.toString()]);
+    }
+    
     // Journalier
     if (stats.dailyStats.length > 0) {
       rows.push(['', '']);
@@ -124,13 +153,6 @@ export default function ReportsPage() {
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-
-    const stationLabels: Record<string, string> = {
-      'ACCUEIL': 'Accueil',
-      'TEST_VUE': 'Test de Vue',
-      'CONSULTATION': 'Consultation',
-      'LUNETTES': 'Lunettes',
-    };
 
     const html = `
       <!DOCTYPE html>
@@ -226,23 +248,36 @@ export default function ReportsPage() {
           </tr>
         </table>
 
-        <h2>Activité par Station</h2>
+        <h2>Parcours Patient - Suivi par Station</h2>
         <table>
           <tr>
             <th>Station</th>
             <th>Total</th>
-            <th>Complétés</th>
-            <th>Taux</th>
+            <th>Complétés/Détails</th>
           </tr>
-          ${stats.queues.byStation.map(s => `
-            <tr>
-              <td>${stationLabels[s.station] || s.station}</td>
-              <td>${s.total}</td>
-              <td>${s.completed}</td>
-              <td>${s.total > 0 ? Math.round((s.completed / s.total) * 100) : 0}%</td>
-            </tr>
-          `).join('')}
+          ${stats.stationFlow ? `
+            <tr><td>🎫 Accueil</td><td>${stats.stationFlow.accueil.tickets}</td><td>${stats.stationFlow.accueil.completed} complétés</td></tr>
+            <tr><td>👁️ Test Vue</td><td>${stats.stationFlow.testVue.total}</td><td>${stats.stationFlow.testVue.completed} complétés</td></tr>
+            <tr><td>🩺 Consultation</td><td>${stats.stationFlow.consultation.total}</td><td>${stats.stationFlow.consultation.withPrescriptions} ordonnances</td></tr>
+            <tr><td>👓 Lunettes</td><td>${stats.stationFlow.lunettes.total}</td><td>${stats.stationFlow.lunettes.completed} complétés</td></tr>
+            <tr><td>💊 Médicaments</td><td>${stats.stationFlow.medicaments.total}</td><td>${stats.stationFlow.medicaments.completed} complétés</td></tr>
+            <tr><td>🏥 Bloc Opératoire</td><td>${stats.stationFlow.blocOperatoire.surgeries} chirurgies</td><td>${stats.stationFlow.blocOperatoire.analyses} analyses</td></tr>
+          ` : ''}
         </table>
+
+        ${stats.glassesOrders ? `
+          <h2>Commandes de Lunettes</h2>
+          <table>
+            <tr>
+              <th>Statut</th>
+              <th>Nombre</th>
+            </tr>
+            <tr><td>Total</td><td>${stats.glassesOrders.total}</td></tr>
+            <tr><td>En attente</td><td>${stats.glassesOrders.pending}</td></tr>
+            <tr><td>Prêtes</td><td>${stats.glassesOrders.ready}</td></tr>
+            <tr><td>Livrées</td><td>${stats.glassesOrders.delivered}</td></tr>
+          </table>
+        ` : ''}
 
         ${stats.dailyStats.length > 0 ? `
           <h2>Activité Journalière</h2>

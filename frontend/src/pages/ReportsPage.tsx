@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
-import { BarChart3, Download, Calendar, Users, Eye, Stethoscope, Clock, TrendingUp } from 'lucide-react';
+import { BarChart3, Download, Calendar, Users, Eye, Stethoscope, Clock, TrendingUp, FileSpreadsheet, RefreshCw } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 import { reportService, ReportStats } from '../services/report.service';
+
+type PresetRange = 'today' | 'week' | 'month' | 'year' | 'custom';
 
 export default function ReportsPage() {
   const [stats, setStats] = useState<ReportStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activePreset, setActivePreset] = useState<PresetRange>('month');
   const [dateRange, setDateRange] = useState({
     start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0],
@@ -29,7 +32,12 @@ export default function ReportsPage() {
     loadStats();
   }, []);
 
-  const setPresetRange = (preset: 'today' | 'week' | 'month' | 'year') => {
+  const setPresetRange = (preset: PresetRange) => {
+    if (preset === 'custom') {
+      setActivePreset('custom');
+      return;
+    }
+    
     const now = new Date();
     let start: Date;
     
@@ -49,10 +57,68 @@ export default function ReportsPage() {
         break;
     }
     
+    setActivePreset(preset);
     setDateRange({
       start: start.toISOString().split('T')[0],
       end: now.toISOString().split('T')[0],
     });
+  };
+
+  const exportToCSV = () => {
+    if (!stats) return;
+
+    const rows: string[][] = [];
+    
+    // Header
+    rows.push(['Rapport CAMG-BOPP', '', '']);
+    rows.push(['Période', `${dateRange.start} - ${dateRange.end}`, '']);
+    rows.push(['', '', '']);
+    
+    // Résumé
+    rows.push(['=== RÉSUMÉ GLOBAL ===', '', '']);
+    rows.push(['Patients Total', stats.patients.total.toString(), '']);
+    rows.push(['Nouveaux Patients', stats.patients.new.toString(), '']);
+    rows.push(['Tests de Vue', stats.visionTests.total.toString(), '']);
+    rows.push(['Consultations', stats.consultations.total.toString(), '']);
+    rows.push(['Consultations avec ordonnance', stats.consultations.withPrescriptions.toString(), '']);
+    rows.push(['', '', '']);
+    
+    // Tickets
+    rows.push(['=== TICKETS ===', '', '']);
+    rows.push(['Total émis', stats.tickets.total.toString(), '']);
+    rows.push(['Complétés', stats.tickets.completed.toString(), '']);
+    rows.push(['Annulés', stats.tickets.cancelled.toString(), '']);
+    rows.push(['Taux de complétion', `${stats.tickets.total > 0 ? Math.round((stats.tickets.completed / stats.tickets.total) * 100) : 0}%`, '']);
+    rows.push(['', '', '']);
+    
+    // Par station
+    rows.push(['=== ACTIVITÉ PAR STATION ===', '', '']);
+    rows.push(['Station', 'Total', 'Complétés']);
+    stats.queues.byStation.forEach(s => {
+      rows.push([s.station, s.total.toString(), s.completed.toString()]);
+    });
+    rows.push(['', '', '']);
+    
+    // Journalier
+    if (stats.dailyStats.length > 0) {
+      rows.push(['=== ACTIVITÉ JOURNALIÈRE ===', '', '']);
+      rows.push(['Date', 'Patients', 'Consultations', 'Tests de Vue']);
+      stats.dailyStats.forEach(d => {
+        rows.push([d.date, d.patients.toString(), d.consultations.toString(), d.visionTests.toString()]);
+      });
+    }
+    
+    // Convert to CSV
+    const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `rapport-camg-bopp-${dateRange.start}-${dateRange.end}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   useEffect(() => {
@@ -230,14 +296,22 @@ export default function ReportsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Rapports & Statistiques</h1>
           <p className="text-gray-600">Analyse de l'activité du dispensaire</p>
         </div>
-        <Button onClick={exportToPDF} leftIcon={<Download className="w-4 h-4" />} disabled={!stats}>
-          Exporter PDF
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={loadStats} variant="secondary" leftIcon={<RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />} disabled={isLoading}>
+            Actualiser
+          </Button>
+          <Button onClick={exportToCSV} variant="secondary" leftIcon={<FileSpreadsheet className="w-4 h-4" />} disabled={!stats}>
+            Export CSV
+          </Button>
+          <Button onClick={exportToPDF} leftIcon={<Download className="w-4 h-4" />} disabled={!stats}>
+            Export PDF
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -257,25 +331,41 @@ export default function ReportsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setPresetRange('today')}
-                className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                className={`px-3 py-1 text-sm rounded-full transition ${
+                  activePreset === 'today' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
               >
                 Aujourd'hui
               </button>
               <button
                 onClick={() => setPresetRange('week')}
-                className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                className={`px-3 py-1 text-sm rounded-full transition ${
+                  activePreset === 'week' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
               >
                 7 jours
               </button>
               <button
                 onClick={() => setPresetRange('month')}
-                className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                className={`px-3 py-1 text-sm rounded-full transition ${
+                  activePreset === 'month' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
               >
                 Ce mois
               </button>
               <button
                 onClick={() => setPresetRange('year')}
-                className="px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 transition"
+                className={`px-3 py-1 text-sm rounded-full transition ${
+                  activePreset === 'year' 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                }`}
               >
                 Cette année
               </button>
@@ -284,15 +374,15 @@ export default function ReportsPage() {
               <input
                 type="date"
                 value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                className="px-3 py-1 border rounded-lg text-sm"
+                onChange={(e) => { setActivePreset('custom'); setDateRange({ ...dateRange, start: e.target.value }); }}
+                className={`px-3 py-1 border rounded-lg text-sm ${activePreset === 'custom' ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
               />
               <span className="text-gray-500">à</span>
               <input
                 type="date"
                 value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                className="px-3 py-1 border rounded-lg text-sm"
+                onChange={(e) => { setActivePreset('custom'); setDateRange({ ...dateRange, end: e.target.value }); }}
+                className={`px-3 py-1 border rounded-lg text-sm ${activePreset === 'custom' ? 'border-blue-500 ring-1 ring-blue-500' : ''}`}
               />
             </div>
           </div>

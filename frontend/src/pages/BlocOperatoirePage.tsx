@@ -398,20 +398,26 @@ export default function BlocOperatoirePage() {
               <CardContent className="space-y-4">
                 {/* Patient search */}
                 <div>
-                  <Input label="Rechercher patient" placeholder="Nom, prénom..." value={analysisPatientSearch} onChange={(e) => setAnalysisPatientSearch(e.target.value)} />
-                  {analysisPatientResults.length > 0 && !selectedAnalysisPatient && (
-                    <div className="border rounded-lg mt-1 max-h-40 overflow-y-auto">
-                      {analysisPatientResults.map((p) => (
-                        <button key={p.id} onClick={() => { setSelectedAnalysisPatient(p); setAnalysisPatientSearch(`${p.lastName} ${p.firstName}`); }} className="w-full p-2 text-left hover:bg-gray-50 text-sm">
-                          <span className="font-medium">{p.lastName} {p.firstName}</span> - {p.phone || 'Pas de tél.'}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {selectedAnalysisPatient && (
-                    <div className="mt-1 p-2 bg-primary-50 rounded flex justify-between items-center">
-                      <span className="text-sm font-medium">{selectedAnalysisPatient.lastName} {selectedAnalysisPatient.firstName}</span>
-                      <button onClick={() => { setSelectedAnalysisPatient(null); setAnalysisPatientSearch(''); }} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                  {!selectedAnalysisPatient ? (
+                    <>
+                      <Input label="Rechercher patient" placeholder="Nom, prénom..." value={analysisPatientSearch} onChange={(e) => setAnalysisPatientSearch(e.target.value)} />
+                      {analysisPatientResults.length > 0 && (
+                        <div className="border rounded-lg mt-1 max-h-40 overflow-y-auto">
+                          {analysisPatientResults.map((p) => (
+                            <button key={p.id} onClick={() => { setSelectedAnalysisPatient(p); setAnalysisPatientSearch(''); }} className="w-full p-2 text-left hover:bg-gray-50 text-sm">
+                              <span className="font-medium">{p.lastName} {p.firstName}</span> - {p.phone || 'Pas de tél.'}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Patient sélectionné</label>
+                      <div className="p-2 bg-primary-50 rounded flex justify-between items-center">
+                        <span className="text-sm font-medium">{selectedAnalysisPatient.lastName} {selectedAnalysisPatient.firstName}</span>
+                        <button onClick={() => { setSelectedAnalysisPatient(null); setAnalysisPatientSearch(''); setAnalysisPatientResults([]); }} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -510,20 +516,26 @@ export default function BlocOperatoirePage() {
               <CardHeader><CardTitle>Planifier une opération</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Input label="Rechercher patient" placeholder="Nom, prénom..." value={surgeryPatientSearch} onChange={(e) => setSurgeryPatientSearch(e.target.value)} />
-                  {surgeryPatientResults.length > 0 && !selectedSurgeryPatient && (
-                    <div className="border rounded-lg mt-1 max-h-40 overflow-y-auto">
-                      {surgeryPatientResults.map((p) => (
-                        <button key={p.id} onClick={() => { setSelectedSurgeryPatient(p); setSurgeryPatientSearch(`${p.lastName} ${p.firstName}`); }} className="w-full p-2 text-left hover:bg-gray-50 text-sm">
-                          <span className="font-medium">{p.lastName} {p.firstName}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                  {selectedSurgeryPatient && (
-                    <div className="mt-1 p-2 bg-primary-50 rounded flex justify-between items-center">
-                      <span className="text-sm font-medium">{selectedSurgeryPatient.lastName} {selectedSurgeryPatient.firstName}</span>
-                      <button onClick={() => { setSelectedSurgeryPatient(null); setSurgeryPatientSearch(''); }} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                  {!selectedSurgeryPatient ? (
+                    <>
+                      <Input label="Rechercher patient" placeholder="Nom, prénom..." value={surgeryPatientSearch} onChange={(e) => setSurgeryPatientSearch(e.target.value)} />
+                      {surgeryPatientResults.length > 0 && (
+                        <div className="border rounded-lg mt-1 max-h-40 overflow-y-auto">
+                          {surgeryPatientResults.map((p) => (
+                            <button key={p.id} onClick={() => { setSelectedSurgeryPatient(p); setSurgeryPatientSearch(''); }} className="w-full p-2 text-left hover:bg-gray-50 text-sm">
+                              <span className="font-medium">{p.lastName} {p.firstName}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Patient sélectionné</label>
+                      <div className="p-2 bg-primary-50 rounded flex justify-between items-center">
+                        <span className="text-sm font-medium">{selectedSurgeryPatient.lastName} {selectedSurgeryPatient.firstName}</span>
+                        <button onClick={() => { setSelectedSurgeryPatient(null); setSurgeryPatientSearch(''); setSurgeryPatientResults([]); }} className="text-gray-400 hover:text-gray-600"><X className="w-4 h-4" /></button>
+                      </div>
                     </div>
                   )}
                 </div>

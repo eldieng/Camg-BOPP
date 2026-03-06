@@ -1,15 +1,33 @@
 import { useState, useEffect } from 'react';
-import { Glasses, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Glasses, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Stethoscope, Eye } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
+import { consultationService, Consultation } from '../services/consultation.service';
 
 export default function LunettesPage() {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
   const [stats, setStats] = useState<StationStats | null>(null);
   const [currentPatient, setCurrentPatient] = useState<QueueEntry | null>(null);
+  const [patientConsultation, setPatientConsultation] = useState<Consultation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+
+  // Charger la consultation du patient
+  const loadPatientConsultation = async (patientId: string) => {
+    try {
+      const consultations = await consultationService.getByPatient(patientId);
+      // Prendre la consultation la plus récente
+      if (consultations.length > 0) {
+        setPatientConsultation(consultations[0]);
+      } else {
+        setPatientConsultation(null);
+      }
+    } catch (err) {
+      console.error('Erreur chargement consultation:', err);
+      setPatientConsultation(null);
+    }
+  };
 
   // Charger la file d'attente
   const loadQueue = async () => {
@@ -22,7 +40,15 @@ export default function LunettesPage() {
       // Trouver le patient en service
       const called = data.queue.find(q => q.status === 'CALLED');
       const inService = data.queue.find(q => q.status === 'IN_SERVICE');
-      setCurrentPatient(inService || called || null);
+      const current = inService || called || null;
+      setCurrentPatient(current);
+      
+      // Charger la consultation du patient en cours
+      if (current) {
+        loadPatientConsultation(current.ticket.patient.id);
+      } else {
+        setPatientConsultation(null);
+      }
     } catch (err) {
       console.error('Erreur chargement file:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du chargement');
@@ -282,6 +308,48 @@ export default function LunettesPage() {
                     )}
                   </div>
                 </div>
+
+                {/* Infos consultation */}
+                {patientConsultation && (
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <Stethoscope className="w-5 h-5" />
+                      Dernière consultation
+                    </h4>
+                    <div className="space-y-2 text-sm">
+                      {patientConsultation.diagnosis && (
+                        <p><span className="font-medium text-gray-700">Diagnostic:</span> {patientConsultation.diagnosis}</p>
+                      )}
+                      {patientConsultation.chiefComplaint && (
+                        <p><span className="font-medium text-gray-700">Motif:</span> {patientConsultation.chiefComplaint}</p>
+                      )}
+                      {patientConsultation.notes && (
+                        <p><span className="font-medium text-gray-700">Notes:</span> {patientConsultation.notes}</p>
+                      )}
+                      {patientConsultation.prescriptions && patientConsultation.prescriptions.length > 0 && (
+                        <div className="mt-3 pt-3 border-t border-blue-200">
+                          <p className="font-medium text-blue-800 mb-2 flex items-center gap-1">
+                            <Eye className="w-4 h-4" /> Prescriptions optiques:
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {patientConsultation.prescriptions.filter(p => p.sphere !== undefined || p.lensType).map((p, idx) => (
+                              <div key={idx} className={`p-2 rounded ${p.eyeType === 'OD' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                                <p className="font-medium">{p.eyeType === 'OD' ? 'Œil Droit' : 'Œil Gauche'}</p>
+                                <div className="text-xs grid grid-cols-4 gap-1 mt-1">
+                                  <span>Sph: {p.sphere ?? '-'}</span>
+                                  <span>Cyl: {p.cylinder ?? '-'}</span>
+                                  <span>Axe: {p.axis ?? '-'}°</span>
+                                  <span>Add: {p.addition ?? '-'}</span>
+                                </div>
+                                {p.lensType && <p className="text-xs mt-1">Verre: {p.lensType}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Checklist lunettes */}
                 <div className="bg-gray-50 rounded-xl p-6">

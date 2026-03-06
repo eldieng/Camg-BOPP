@@ -156,7 +156,7 @@ model User {
 
 model Patient {
   id                 String   @id @default(uuid())
-  registrationNumber String   @unique // Numéro d'immatriculation unique (ex: CAMG-2026-00001)
+  registrationNumber String?  @unique // Numéro d'immatriculation unique (ex: CAMG-2026-00001), optionnel pour migration
   firstName          String
   lastName           String
   dateOfBirth        DateTime

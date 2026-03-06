@@ -30,6 +30,22 @@ export interface ReportStats {
       completed: number;
     }[];
   };
+  // Stats détaillées par station pour le suivi du parcours
+  stationFlow: {
+    accueil: { tickets: number; completed: number };
+    testVue: { total: number; completed: number };
+    consultation: { total: number; withPrescriptions: number };
+    lunettes: { total: number; completed: number };
+    medicaments: { total: number; completed: number };
+    blocOperatoire: { surgeries: number; analyses: number; completed: number };
+  };
+  // Commandes de lunettes
+  glassesOrders: {
+    total: number;
+    pending: number;
+    ready: number;
+    delivered: number;
+  };
   dailyStats: {
     date: string;
     patients: number;
@@ -192,6 +208,107 @@ export class ReportService {
       `,
     ]);
 
+    // Stats par station détaillées
+    const [
+      testVueCompleted,
+      lunettesTotal,
+      lunettesCompleted,
+      medicamentsTotal,
+      medicamentsCompleted,
+      surgeriesTotal,
+      surgeriesCompleted,
+      analysesTotal,
+      glassesOrdersTotal,
+      glassesOrdersPending,
+      glassesOrdersReady,
+      glassesOrdersDelivered,
+    ] = await Promise.all([
+      // Test Vue completed
+      prisma.queueEntry.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          station: 'TEST_VUE',
+          status: 'COMPLETED',
+        },
+      }),
+      // Lunettes total
+      prisma.queueEntry.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          station: 'LUNETTES',
+        },
+      }),
+      // Lunettes completed
+      prisma.queueEntry.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          station: 'LUNETTES',
+          status: 'COMPLETED',
+        },
+      }),
+      // Médicaments total
+      prisma.queueEntry.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          station: 'MEDICAMENTS',
+        },
+      }),
+      // Médicaments completed
+      prisma.queueEntry.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          station: 'MEDICAMENTS',
+          status: 'COMPLETED',
+        },
+      }),
+      // Surgeries total
+      prisma.surgery.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+        },
+      }),
+      // Surgeries completed
+      prisma.surgery.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: 'COMPLETED',
+        },
+      }),
+      // Lab analyses total
+      prisma.labAnalysis.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+        },
+      }),
+      // Glasses orders total
+      prisma.glassesOrder.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+        },
+      }),
+      // Glasses orders pending
+      prisma.glassesOrder.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: 'PENDING',
+        },
+      }),
+      // Glasses orders ready
+      prisma.glassesOrder.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: 'READY',
+        },
+      }),
+      // Glasses orders delivered
+      prisma.glassesOrder.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          status: 'DELIVERED',
+        },
+      }),
+    ]);
+
     // Calculate average wait time
     const waitTimes = await prisma.queueEntry.findMany({
       where: {
@@ -285,6 +402,20 @@ export class ReportService {
           total: s._count.id,
           completed: completedByStation.find((c) => c.station === s.station)?._count.id || 0,
         })),
+      },
+      stationFlow: {
+        accueil: { tickets: totalTickets, completed: completedTickets },
+        testVue: { total: totalVisionTests, completed: testVueCompleted },
+        consultation: { total: totalConsultations, withPrescriptions: consultationsWithGlasses },
+        lunettes: { total: lunettesTotal, completed: lunettesCompleted },
+        medicaments: { total: medicamentsTotal, completed: medicamentsCompleted },
+        blocOperatoire: { surgeries: surgeriesTotal, analyses: analysesTotal, completed: surgeriesCompleted },
+      },
+      glassesOrders: {
+        total: glassesOrdersTotal,
+        pending: glassesOrdersPending,
+        ready: glassesOrdersReady,
+        delivered: glassesOrdersDelivered,
       },
       dailyStats,
     };

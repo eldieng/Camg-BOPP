@@ -31,6 +31,20 @@ export interface ReportStats {
       completed: number;
     }[];
   };
+  stationFlow: {
+    accueil: { tickets: number; completed: number };
+    testVue: { total: number; completed: number };
+    consultation: { total: number; withPrescriptions: number };
+    lunettes: { total: number; completed: number };
+    medicaments: { total: number; completed: number };
+    blocOperatoire: { surgeries: number; analyses: number; completed: number };
+  };
+  glassesOrders: {
+    total: number;
+    pending: number;
+    ready: number;
+    delivered: number;
+  };
   dailyStats: {
     date: string;
     patients: number;

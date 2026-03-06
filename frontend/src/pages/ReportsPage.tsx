@@ -442,6 +442,100 @@ export default function ReportsPage() {
             </Card>
           </div>
 
+          {/* Parcours Patient - Flux complet */}
+          {stats.stationFlow && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="w-5 h-5 mr-2" />
+                  Parcours Patient - Suivi par Station
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {/* Accueil */}
+                  <div className="bg-blue-50 rounded-lg p-4 text-center border-2 border-blue-200">
+                    <div className="text-3xl mb-2">🎫</div>
+                    <p className="font-semibold text-blue-800">Accueil</p>
+                    <p className="text-2xl font-bold text-blue-600">{stats.stationFlow.accueil.tickets}</p>
+                    <p className="text-xs text-blue-600">{stats.stationFlow.accueil.completed} complétés</p>
+                  </div>
+                  
+                  {/* Test Vue */}
+                  <div className="bg-green-50 rounded-lg p-4 text-center border-2 border-green-200">
+                    <div className="text-3xl mb-2">👁️</div>
+                    <p className="font-semibold text-green-800">Test Vue</p>
+                    <p className="text-2xl font-bold text-green-600">{stats.stationFlow.testVue.total}</p>
+                    <p className="text-xs text-green-600">{stats.stationFlow.testVue.completed} complétés</p>
+                  </div>
+                  
+                  {/* Consultation */}
+                  <div className="bg-purple-50 rounded-lg p-4 text-center border-2 border-purple-200">
+                    <div className="text-3xl mb-2">🩺</div>
+                    <p className="font-semibold text-purple-800">Consultation</p>
+                    <p className="text-2xl font-bold text-purple-600">{stats.stationFlow.consultation.total}</p>
+                    <p className="text-xs text-purple-600">{stats.stationFlow.consultation.withPrescriptions} ordonnances</p>
+                  </div>
+                  
+                  {/* Lunettes */}
+                  <div className="bg-indigo-50 rounded-lg p-4 text-center border-2 border-indigo-200">
+                    <div className="text-3xl mb-2">👓</div>
+                    <p className="font-semibold text-indigo-800">Lunettes</p>
+                    <p className="text-2xl font-bold text-indigo-600">{stats.stationFlow.lunettes.total}</p>
+                    <p className="text-xs text-indigo-600">{stats.stationFlow.lunettes.completed} complétés</p>
+                  </div>
+                  
+                  {/* Médicaments */}
+                  <div className="bg-teal-50 rounded-lg p-4 text-center border-2 border-teal-200">
+                    <div className="text-3xl mb-2">💊</div>
+                    <p className="font-semibold text-teal-800">Médicaments</p>
+                    <p className="text-2xl font-bold text-teal-600">{stats.stationFlow.medicaments.total}</p>
+                    <p className="text-xs text-teal-600">{stats.stationFlow.medicaments.completed} complétés</p>
+                  </div>
+                  
+                  {/* Bloc Opératoire */}
+                  <div className="bg-orange-50 rounded-lg p-4 text-center border-2 border-orange-200">
+                    <div className="text-3xl mb-2">🏥</div>
+                    <p className="font-semibold text-orange-800">Bloc Op.</p>
+                    <p className="text-2xl font-bold text-orange-600">{stats.stationFlow.blocOperatoire.surgeries}</p>
+                    <p className="text-xs text-orange-600">{stats.stationFlow.blocOperatoire.analyses} analyses</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Commandes de Lunettes */}
+          {stats.glassesOrders && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  👓 Commandes de Lunettes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-gray-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-gray-600">Total</p>
+                    <p className="text-2xl font-bold text-gray-800">{stats.glassesOrders.total}</p>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-yellow-700">En attente</p>
+                    <p className="text-2xl font-bold text-yellow-600">{stats.glassesOrders.pending}</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-blue-700">Prêtes</p>
+                    <p className="text-2xl font-bold text-blue-600">{stats.glassesOrders.ready}</p>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4 text-center">
+                    <p className="text-sm text-green-700">Livrées</p>
+                    <p className="text-2xl font-bold text-green-600">{stats.glassesOrders.delivered}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Détails */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tickets */}

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "prisma generate && prisma db push && tsc",
+    "build": "prisma generate && prisma db push --accept-data-loss && tsc",
     "postbuild": "npx tsx scripts/seed-admin.ts || true",
     "start": "node dist/index.js",
     "postinstall": "prisma generate",

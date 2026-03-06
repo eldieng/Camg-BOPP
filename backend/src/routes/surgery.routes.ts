@@ -226,4 +226,58 @@ router.put(
   (req, res) => surgeryController.updateFollowUp(req, res)
 );
 
+// ============================================
+// MATÉRIEL PRÉOPÉRATOIRE
+// ============================================
+
+/**
+ * GET /api/surgery/:surgeryId/materials
+ * Liste du matériel pour une chirurgie
+ */
+router.get(
+  '/:surgeryId/materials',
+  authorize('MEDECIN', 'BLOC', 'ADMIN'),
+  (req, res) => surgeryController.getMaterials(req, res)
+);
+
+/**
+ * POST /api/surgery/:surgeryId/materials
+ * Ajouter du matériel
+ */
+router.post(
+  '/:surgeryId/materials',
+  authorize('MEDECIN', 'BLOC', 'ADMIN'),
+  (req, res) => surgeryController.addMaterial(req, res)
+);
+
+/**
+ * POST /api/surgery/:surgeryId/materials/default
+ * Ajouter le matériel par défaut selon le type de chirurgie
+ */
+router.post(
+  '/:surgeryId/materials/default',
+  authorize('MEDECIN', 'BLOC', 'ADMIN'),
+  (req, res) => surgeryController.addDefaultMaterials(req, res)
+);
+
+/**
+ * PUT /api/surgery/materials/:id
+ * Mettre à jour un matériel (disponibilité, préparation)
+ */
+router.put(
+  '/materials/:id',
+  authorize('MEDECIN', 'BLOC', 'ADMIN'),
+  (req, res) => surgeryController.updateMaterial(req, res)
+);
+
+/**
+ * DELETE /api/surgery/materials/:id
+ * Supprimer un matériel
+ */
+router.delete(
+  '/materials/:id',
+  authorize('MEDECIN', 'BLOC', 'ADMIN'),
+  (req, res) => surgeryController.deleteMaterial(req, res)
+);
+
 export default router;

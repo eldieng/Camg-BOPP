@@ -426,6 +426,100 @@ export class SurgeryService {
     });
   }
 
+  // ---- PRE-OP MATERIALS ----
+
+  async addMaterial(surgeryId: string, data: { itemName: string; category?: string; quantity?: number; notes?: string }) {
+    return prisma.preOpMaterial.create({
+      data: {
+        surgeryId,
+        itemName: data.itemName,
+        category: data.category,
+        quantity: data.quantity || 1,
+        notes: data.notes,
+      },
+    });
+  }
+
+  async getMaterials(surgeryId: string) {
+    return prisma.preOpMaterial.findMany({
+      where: { surgeryId },
+      orderBy: { category: 'asc' },
+    });
+  }
+
+  async updateMaterial(id: string, data: { isAvailable?: boolean; isPrepared?: boolean; notes?: string }) {
+    return prisma.preOpMaterial.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deleteMaterial(id: string) {
+    return prisma.preOpMaterial.delete({
+      where: { id },
+    });
+  }
+
+  async getDefaultMaterialsForSurgeryType(surgeryType: SurgeryType) {
+    const defaultMaterials: Record<string, { itemName: string; category: string }[]> = {
+      CATARACTE: [
+        { itemName: 'Implant intraoculaire', category: 'Implants' },
+        { itemName: 'Viscoélastique', category: 'Consommables' },
+        { itemName: 'BSS (solution saline)', category: 'Consommables' },
+        { itemName: 'Phacoémulsificateur', category: 'Instruments' },
+        { itemName: 'Kératome', category: 'Instruments' },
+        { itemName: 'Pinces capsulaires', category: 'Instruments' },
+        { itemName: 'Canule d\'irrigation', category: 'Instruments' },
+        { itemName: 'Antibiotique intracamérulaire', category: 'Médicaments' },
+      ],
+      GLAUCOME: [
+        { itemName: 'Valve de drainage', category: 'Implants' },
+        { itemName: 'Mitomycine C', category: 'Médicaments' },
+        { itemName: 'Sutures résorbables', category: 'Consommables' },
+        { itemName: 'Éponges chirurgicales', category: 'Consommables' },
+        { itemName: 'Pinces à trabéculectomie', category: 'Instruments' },
+      ],
+      PTERYGION: [
+        { itemName: 'Greffe conjonctivale', category: 'Greffes' },
+        { itemName: 'Colle biologique', category: 'Consommables' },
+        { itemName: 'Sutures 8-0', category: 'Consommables' },
+        { itemName: 'Pinces à ptérygion', category: 'Instruments' },
+      ],
+      DECOLLEMENT_RETINE: [
+        { itemName: 'Huile de silicone', category: 'Implants' },
+        { itemName: 'Gaz SF6/C3F8', category: 'Consommables' },
+        { itemName: 'Laser endoculaire', category: 'Instruments' },
+        { itemName: 'Vitrectome', category: 'Instruments' },
+        { itemName: 'Éclairage endoculaire', category: 'Instruments' },
+      ],
+      LASER: [
+        { itemName: 'Lentille de contact laser', category: 'Instruments' },
+        { itemName: 'Gel de couplage', category: 'Consommables' },
+      ],
+    };
+
+    return defaultMaterials[surgeryType] || [];
+  }
+
+  async addDefaultMaterials(surgeryId: string, surgeryType: SurgeryType) {
+    const defaults = await this.getDefaultMaterialsForSurgeryType(surgeryType);
+    
+    const materials = await Promise.all(
+      defaults.map(m => 
+        prisma.preOpMaterial.create({
+          data: {
+            surgeryId,
+            itemName: m.itemName,
+            category: m.category,
+            quantity: 1,
+          },
+        })
+      )
+    );
+    
+    return materials;
+  }
+
   // ---- STATS ----
 
   async getBlocStats() {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Eye, Stethoscope, Glasses, FileText, Clock } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Eye, Stethoscope, Glasses, FileText, Clock, Printer, Crown } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
 import { patientService, Patient } from '../services/patient.service';
 import { consultationService, PatientHistory } from '../services/consultation.service';
@@ -57,6 +57,251 @@ export default function PatientHistoryPage() {
     });
   };
 
+  const printPatientFile = () => {
+    if (!patient) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const age = calculateAge(patient.dateOfBirth);
+    const lastTest = visionTests[0];
+    const lastConsult = history?.consultations?.[0];
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Fiche Patient - ${patient.lastName} ${patient.firstName}</title>
+        <style>
+          @page { size: A4; margin: 15mm; }
+          body { font-family: Arial, sans-serif; font-size: 11pt; color: #333; margin: 0; padding: 0; }
+          .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1e40af; padding-bottom: 15px; margin-bottom: 20px; }
+          .logo { font-size: 24pt; font-weight: bold; color: #1e40af; }
+          .logo-sub { font-size: 10pt; color: #666; }
+          .doc-title { text-align: right; }
+          .doc-title h2 { margin: 0; color: #1e40af; font-size: 14pt; }
+          .doc-title .date { font-size: 10pt; color: #666; }
+          .patient-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+          .patient-info h3 { margin: 0 0 10px 0; color: #1e40af; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; }
+          .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+          .info-item { }
+          .info-label { font-size: 9pt; color: #666; text-transform: uppercase; }
+          .info-value { font-weight: bold; font-size: 11pt; }
+          .reg-number { font-family: monospace; background: #1e40af; color: white; padding: 3px 8px; border-radius: 4px; font-size: 10pt; }
+          .vip-badge { background: #fbbf24; color: #78350f; padding: 3px 8px; border-radius: 4px; font-size: 9pt; font-weight: bold; }
+          .section { margin-bottom: 20px; }
+          .section h3 { color: #1e40af; font-size: 12pt; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 10px; }
+          .vision-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+          .vision-table th, .vision-table td { border: 1px solid #e2e8f0; padding: 8px; text-align: center; }
+          .vision-table th { background: #f1f5f9; font-size: 10pt; }
+          .vision-table .eye-header { background: #1e40af; color: white; }
+          .vision-table .od { background: #eff6ff; }
+          .vision-table .og { background: #f0fdf4; }
+          .consultation-box { background: #fefce8; border: 1px solid #fef08a; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+          .consultation-box h4 { margin: 0 0 10px 0; color: #854d0e; }
+          .prescription-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+          .prescription-box { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
+          .prescription-box.od { background: #eff6ff; border-color: #bfdbfe; }
+          .prescription-box.og { background: #f0fdf4; border-color: #bbf7d0; }
+          .prescription-box h5 { margin: 0 0 8px 0; text-align: center; }
+          .rx-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; text-align: center; }
+          .rx-item { }
+          .rx-label { font-size: 8pt; color: #666; }
+          .rx-value { font-weight: bold; font-size: 12pt; }
+          .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; font-size: 9pt; color: #666; }
+          .signature { text-align: right; }
+          .signature-line { border-top: 1px solid #333; width: 200px; margin-top: 40px; padding-top: 5px; }
+          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <div class="logo">CAMG-BOPP</div>
+            <div class="logo-sub">Dispensaire Ophtalmologique<br/>Dakar, Sénégal</div>
+          </div>
+          <div class="doc-title">
+            <h2>FICHE PATIENT</h2>
+            <div class="date">Imprimé le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        </div>
+
+        <div class="patient-info">
+          <h3>
+            Informations Patient
+            ${patient.registrationNumber ? `<span class="reg-number">${patient.registrationNumber}</span>` : ''}
+            ${patient.isVIP ? `<span class="vip-badge">⭐ VIP</span>` : ''}
+          </h3>
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-label">Nom complet</div>
+              <div class="info-value">${patient.lastName} ${patient.firstName}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Date de naissance</div>
+              <div class="info-value">${new Date(patient.dateOfBirth).toLocaleDateString('fr-FR')} (${age} ans)</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Genre</div>
+              <div class="info-value">${patient.gender === 'MALE' ? 'Homme' : 'Femme'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Téléphone</div>
+              <div class="info-value">${patient.phone || '-'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Adresse</div>
+              <div class="info-value">${patient.address || '-'}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-label">Statut particulier</div>
+              <div class="info-value">
+                ${patient.isPregnant ? '🤰 Femme enceinte' : ''}
+                ${patient.isDisabled ? '♿ Personne handicapée' : ''}
+                ${!patient.isPregnant && !patient.isDisabled ? 'Aucun' : ''}
+              </div>
+            </div>
+          </div>
+          ${patient.isVIP && patient.vipReason ? `<div style="margin-top: 10px; font-style: italic; color: #854d0e;">Raison VIP: ${patient.vipReason}</div>` : ''}
+        </div>
+
+        ${lastTest ? `
+        <div class="section">
+          <h3>Dernier Test de Vue (${new Date(lastTest.createdAt).toLocaleDateString('fr-FR')})</h3>
+          <table class="vision-table">
+            <tr>
+              <th></th>
+              <th class="eye-header" style="background: #3b82f6;">Œil Droit (OD)</th>
+              <th class="eye-header" style="background: #22c55e;">Œil Gauche (OG)</th>
+            </tr>
+            <tr>
+              <th>Acuité visuelle</th>
+              <td class="od">${lastTest.rightEye_acuity || '-'}</td>
+              <td class="og">${lastTest.leftEye_acuity || '-'}</td>
+            </tr>
+            <tr>
+              <th>Sphère</th>
+              <td class="od">${lastTest.rightEye_sphere ?? '-'}</td>
+              <td class="og">${lastTest.leftEye_sphere ?? '-'}</td>
+            </tr>
+            <tr>
+              <th>Cylindre</th>
+              <td class="od">${lastTest.rightEye_cylinder ?? '-'}</td>
+              <td class="og">${lastTest.leftEye_cylinder ?? '-'}</td>
+            </tr>
+            <tr>
+              <th>Axe</th>
+              <td class="od">${lastTest.rightEye_axis ? lastTest.rightEye_axis + '°' : '-'}</td>
+              <td class="og">${lastTest.leftEye_axis ? lastTest.leftEye_axis + '°' : '-'}</td>
+            </tr>
+            <tr>
+              <th>Addition</th>
+              <td class="od">${lastTest.rightEye_addition ?? '-'}</td>
+              <td class="og">${lastTest.leftEye_addition ?? '-'}</td>
+            </tr>
+            ${lastTest.pupillaryDistance ? `
+            <tr>
+              <th>Écart pupillaire</th>
+              <td colspan="2" style="text-align: center;">${lastTest.pupillaryDistance} mm</td>
+            </tr>
+            ` : ''}
+          </table>
+          ${lastTest.notes ? `<p><strong>Notes:</strong> ${lastTest.notes}</p>` : ''}
+        </div>
+        ` : ''}
+
+        ${lastConsult ? `
+        <div class="section">
+          <h3>Dernière Consultation (${new Date(lastConsult.createdAt).toLocaleDateString('fr-FR')})</h3>
+          <div class="consultation-box">
+            ${lastConsult.chiefComplaint ? `<p><strong>Motif:</strong> ${lastConsult.chiefComplaint}</p>` : ''}
+            ${lastConsult.diagnosis ? `<p><strong>Diagnostic:</strong> ${lastConsult.diagnosis}</p>` : ''}
+            ${lastConsult.notes ? `<p><strong>Notes:</strong> ${lastConsult.notes}</p>` : ''}
+            ${lastConsult.intraocularPressureOD || lastConsult.intraocularPressureOG ? `
+              <p><strong>Pression intraoculaire:</strong> OD: ${lastConsult.intraocularPressureOD ?? '-'} mmHg | OG: ${lastConsult.intraocularPressureOG ?? '-'} mmHg</p>
+            ` : ''}
+          </div>
+          
+          ${lastConsult.prescriptions && lastConsult.prescriptions.length > 0 ? `
+          <h4>Prescriptions</h4>
+          <div class="prescription-grid">
+            ${lastConsult.prescriptions.filter(p => p.eyeType === 'OD').map(p => `
+              <div class="prescription-box od">
+                <h5>Œil Droit (OD)</h5>
+                ${p.medication ? `<p><strong>Médicament:</strong> ${p.medication}</p>` : ''}
+                ${p.dosage ? `<p><strong>Posologie:</strong> ${p.dosage}</p>` : ''}
+                ${p.duration ? `<p><strong>Durée:</strong> ${p.duration}</p>` : ''}
+                ${p.sphere !== undefined || p.cylinder !== undefined ? `
+                <div class="rx-grid">
+                  <div class="rx-item"><div class="rx-label">Sph</div><div class="rx-value">${p.sphere ?? '-'}</div></div>
+                  <div class="rx-item"><div class="rx-label">Cyl</div><div class="rx-value">${p.cylinder ?? '-'}</div></div>
+                  <div class="rx-item"><div class="rx-label">Axe</div><div class="rx-value">${p.axis ?? '-'}°</div></div>
+                  <div class="rx-item"><div class="rx-label">Add</div><div class="rx-value">${p.addition ?? '-'}</div></div>
+                </div>
+                ` : ''}
+                ${p.lensType ? `<p style="margin-top: 5px;"><strong>Verre:</strong> ${p.lensType}</p>` : ''}
+              </div>
+            `).join('')}
+            ${lastConsult.prescriptions.filter(p => p.eyeType === 'OG').map(p => `
+              <div class="prescription-box og">
+                <h5>Œil Gauche (OG)</h5>
+                ${p.medication ? `<p><strong>Médicament:</strong> ${p.medication}</p>` : ''}
+                ${p.dosage ? `<p><strong>Posologie:</strong> ${p.dosage}</p>` : ''}
+                ${p.duration ? `<p><strong>Durée:</strong> ${p.duration}</p>` : ''}
+                ${p.sphere !== undefined || p.cylinder !== undefined ? `
+                <div class="rx-grid">
+                  <div class="rx-item"><div class="rx-label">Sph</div><div class="rx-value">${p.sphere ?? '-'}</div></div>
+                  <div class="rx-item"><div class="rx-label">Cyl</div><div class="rx-value">${p.cylinder ?? '-'}</div></div>
+                  <div class="rx-item"><div class="rx-label">Axe</div><div class="rx-value">${p.axis ?? '-'}°</div></div>
+                  <div class="rx-item"><div class="rx-label">Add</div><div class="rx-value">${p.addition ?? '-'}</div></div>
+                </div>
+                ` : ''}
+                ${p.lensType ? `<p style="margin-top: 5px;"><strong>Verre:</strong> ${p.lensType}</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+        </div>
+        ` : ''}
+
+        <div class="section">
+          <h3>Résumé des Visites</h3>
+          <table class="vision-table">
+            <tr>
+              <th>Consultations</th>
+              <th>Tests de vue</th>
+              <th>Prescriptions</th>
+              <th>Première visite</th>
+            </tr>
+            <tr>
+              <td><strong>${history?.consultations?.length || 0}</strong></td>
+              <td><strong>${visionTests.length}</strong></td>
+              <td><strong>${history?.consultations?.reduce((acc, c) => acc + (c.prescriptions?.length || 0), 0) || 0}</strong></td>
+              <td>${patient.createdAt ? new Date(patient.createdAt).toLocaleDateString('fr-FR') : '-'}</td>
+            </tr>
+          </table>
+        </div>
+
+        <div class="footer">
+          <div>
+            <strong>CAMG-BOPP</strong> - Centre d'Appui Médical Général<br/>
+            Dispensaire Ophtalmologique - Dakar, Sénégal
+          </div>
+          <div class="signature">
+            <div class="signature-line">Signature du médecin</div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.onload = () => {
+      printWindow.print();
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -79,16 +324,33 @@ export default function PatientHistoryPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="secondary" onClick={() => navigate('/patients')} leftIcon={<ArrowLeft className="w-4 h-4" />}>
-          Retour
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Dossier Patient: {patient.lastName} {patient.firstName}
-          </h1>
-          <p className="text-gray-600">Historique complet des visites et traitements</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="secondary" onClick={() => navigate('/patients')} leftIcon={<ArrowLeft className="w-4 h-4" />}>
+            Retour
+          </Button>
+          <div>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-900">
+                Dossier Patient: {patient.lastName} {patient.firstName}
+              </h1>
+              {patient.isVIP && (
+                <span className="flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+                  <Crown className="w-4 h-4" /> VIP
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 text-gray-600">
+              {patient.registrationNumber && (
+                <span className="font-mono text-sm bg-gray-100 px-2 py-0.5 rounded">{patient.registrationNumber}</span>
+              )}
+              <span>Historique complet des visites et traitements</span>
+            </div>
+          </div>
         </div>
+        <Button onClick={printPatientFile} leftIcon={<Printer className="w-4 h-4" />}>
+          Imprimer fiche
+        </Button>
       </div>
 
       {/* Infos patient */}

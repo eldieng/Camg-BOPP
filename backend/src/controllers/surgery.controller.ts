@@ -305,6 +305,59 @@ export class SurgeryController {
     }
   }
 
+  // ---- PRE-OP MATERIALS ----
+
+  async getMaterials(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const materials = await surgeryService.getMaterials(req.params.surgeryId);
+      sendSuccess(res, materials);
+    } catch (error) {
+      console.error('Erreur récupération matériel:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la récupération', 500);
+    }
+  }
+
+  async addMaterial(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const material = await surgeryService.addMaterial(req.params.surgeryId, req.body);
+      sendSuccess(res, material, 201, 'Matériel ajouté');
+    } catch (error) {
+      console.error('Erreur ajout matériel:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de l\'ajout', 500);
+    }
+  }
+
+  async updateMaterial(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const material = await surgeryService.updateMaterial(req.params.id, req.body);
+      sendSuccess(res, material, 200, 'Matériel mis à jour');
+    } catch (error) {
+      console.error('Erreur mise à jour matériel:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la mise à jour', 500);
+    }
+  }
+
+  async deleteMaterial(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      await surgeryService.deleteMaterial(req.params.id);
+      sendSuccess(res, null, 200, 'Matériel supprimé');
+    } catch (error) {
+      console.error('Erreur suppression matériel:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la suppression', 500);
+    }
+  }
+
+  async addDefaultMaterials(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { surgeryType } = req.body;
+      const materials = await surgeryService.addDefaultMaterials(req.params.surgeryId, surgeryType);
+      sendSuccess(res, materials, 201, 'Matériel par défaut ajouté');
+    } catch (error) {
+      console.error('Erreur ajout matériel par défaut:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de l\'ajout', 500);
+    }
+  }
+
   // ---- STATS ----
 
   async getBlocStats(_req: AuthenticatedRequest, res: Response): Promise<void> {

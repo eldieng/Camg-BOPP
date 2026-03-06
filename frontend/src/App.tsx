@@ -20,6 +20,8 @@ import ReportsPage from './pages/ReportsPage';
 import BlocOperatoirePage from './pages/BlocOperatoirePage';
 import TicketVerifyPage from './pages/TicketVerifyPage';
 import GatePage from './pages/GatePage';
+import OrientationsPage from './pages/OrientationsPage';
+import CommandesPage from './pages/CommandesPage';
 
 function App() {
   return (
@@ -121,6 +123,20 @@ function App() {
             <Route path="porte" element={
               <ProtectedRoute allowedRoles={['PORTE', 'ACCUEIL', 'ADMIN']}>
                 <GatePage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Orientations patients */}
+            <Route path="orientations" element={
+              <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
+                <OrientationsPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Bons de commande */}
+            <Route path="commandes" element={
+              <ProtectedRoute allowedRoles={['LUNETTES', 'MEDICAMENTS', 'BLOC', 'ADMIN']}>
+                <CommandesPage />
               </ProtectedRoute>
             } />
           </Route>

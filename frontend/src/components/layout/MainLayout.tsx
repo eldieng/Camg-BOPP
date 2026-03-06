@@ -17,6 +17,8 @@ import {
   Calendar,
   Scissors,
   DoorOpen,
+  ExternalLink,
+  ShoppingCart,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -87,6 +89,18 @@ const navItems: NavItem[] = [
     path: '/porte',
     icon: <DoorOpen className="w-5 h-5" />,
     roles: ['PORTE', 'ACCUEIL', 'ADMIN'],
+  },
+  {
+    label: 'Orientations',
+    path: '/orientations',
+    icon: <ExternalLink className="w-5 h-5" />,
+    roles: ['MEDECIN', 'ADMIN'],
+  },
+  {
+    label: 'Commandes',
+    path: '/commandes',
+    icon: <ShoppingCart className="w-5 h-5" />,
+    roles: ['LUNETTES', 'MEDICAMENTS', 'BLOC', 'ADMIN'],
   },
   {
     label: 'Statistiques',

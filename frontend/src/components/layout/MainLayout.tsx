@@ -19,6 +19,7 @@ import {
   DoorOpen,
   ExternalLink,
   ShoppingCart,
+  Glasses,
 } from 'lucide-react';
 import { UserRole } from '../../types';
 
@@ -101,6 +102,12 @@ const navItems: NavItem[] = [
     path: '/commandes',
     icon: <ShoppingCart className="w-5 h-5" />,
     roles: ['LUNETTES', 'MEDICAMENTS', 'BLOC', 'ADMIN'],
+  },
+  {
+    label: 'Atelier Lunettes',
+    path: '/atelier-lunettes',
+    icon: <Glasses className="w-5 h-5" />,
+    roles: ['LUNETTES', 'MEDECIN', 'ADMIN'],
   },
   {
     label: 'Statistiques',

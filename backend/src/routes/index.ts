@@ -13,6 +13,7 @@ import surgeryRoutes from './surgery.routes.js';
 import gateRoutes from './gate.routes.js';
 import referralRoutes from './referral.routes.js';
 import orderRoutes from './order.routes.js';
+import glassesOrderRoutes from './glassesOrder.routes.js';
 
 const router = Router();
 
@@ -57,6 +58,9 @@ router.use('/referrals', referralRoutes);
 
 // Routes bons de commande
 router.use('/orders', orderRoutes);
+
+// Routes commandes de lunettes (atelier)
+router.use('/glasses-orders', glassesOrderRoutes);
 
 // Route de santé
 router.get('/health', (_req, res) => {

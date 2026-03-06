@@ -180,6 +180,7 @@ model Patient {
   surgeries     Surgery[]
   gateEntries   GateEntry[]
   referrals     Referral[]
+  glassesOrders GlassesOrder[]
 
   @@index([registrationNumber])
   @@index([lastName, firstName])
@@ -277,6 +278,7 @@ model Consultation {
   labAnalyses   LabAnalysis[]
   surgeries     Surgery[]
   referrals     Referral[]
+  glassesOrders GlassesOrder[]
 
   @@index([patientId])
   @@index([doctorId])
@@ -597,6 +599,71 @@ model OrderItem {
   order InternalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   @@map("order_items")
+}
+
+// ============================================
+// COMMANDES DE LUNETTES (ATELIER)
+// ============================================
+
+enum GlassesOrderStatus {
+  PENDING       // En attente de fabrication
+  IN_PROGRESS   // En cours de fabrication
+  READY         // Prêt à être récupéré
+  DELIVERED     // Livré au patient
+  CANCELLED     // Annulé
+}
+
+model GlassesOrder {
+  id              String             @id @default(uuid())
+  orderNumber     String             @unique // Numéro de commande (LUN-YYYY-NNNNN)
+  patientId       String
+  consultationId  String
+  prescriptionId  String?            // Prescription optique liée (OD ou OG)
+  
+  // Prescription OD (Œil Droit)
+  odSphere        Float?
+  odCylinder      Float?
+  odAxis          Int?
+  odAddition      Float?
+  
+  // Prescription OG (Œil Gauche)
+  ogSphere        Float?
+  ogCylinder      Float?
+  ogAxis          Int?
+  ogAddition      Float?
+  
+  // Détails lunettes
+  lensType        String?            // Type de verre (simple, progressif, bifocal)
+  coating         String?            // Traitement (anti-reflet, photochromique, etc.)
+  frameType       String?            // Type de monture
+  frameReference  String?            // Référence monture
+  pupillaryDistance Float?           // Écart pupillaire
+  
+  status          GlassesOrderStatus @default(PENDING)
+  priority        Priority           @default(NORMAL)
+  
+  orderDate       DateTime           @default(now())
+  estimatedDate   DateTime?          // Date estimée de livraison
+  readyDate       DateTime?          // Date de mise à disposition
+  deliveredDate   DateTime?          // Date de remise au patient
+  
+  notes           String?
+  workshopNotes   String?            // Notes de l'atelier
+  
+  createdBy       String             // ID utilisateur qui crée la commande
+  preparedBy      String?            // ID utilisateur atelier qui prépare
+  
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  patient      Patient      @relation(fields: [patientId], references: [id])
+  consultation Consultation @relation(fields: [consultationId], references: [id])
+
+  @@index([patientId])
+  @@index([consultationId])
+  @@index([status])
+  @@index([orderDate])
+  @@map("glasses_orders")
 }
 
 // ============================================

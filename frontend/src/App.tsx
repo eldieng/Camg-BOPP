@@ -22,6 +22,7 @@ import TicketVerifyPage from './pages/TicketVerifyPage';
 import GatePage from './pages/GatePage';
 import OrientationsPage from './pages/OrientationsPage';
 import CommandesPage from './pages/CommandesPage';
+import AtelierLunettesPage from './pages/AtelierLunettesPage';
 
 function App() {
   return (
@@ -137,6 +138,13 @@ function App() {
             <Route path="commandes" element={
               <ProtectedRoute allowedRoles={['LUNETTES', 'MEDICAMENTS', 'BLOC', 'ADMIN']}>
                 <CommandesPage />
+              </ProtectedRoute>
+            } />
+            
+            {/* Atelier Lunettes (commandes de lunettes) */}
+            <Route path="atelier-lunettes" element={
+              <ProtectedRoute allowedRoles={['LUNETTES', 'MEDECIN', 'ADMIN']}>
+                <AtelierLunettesPage />
               </ProtectedRoute>
             } />
           </Route>

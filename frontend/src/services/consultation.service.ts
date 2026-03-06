@@ -2,6 +2,7 @@ import api from './api';
 import { ApiResponse } from '../types';
 
 export type EyeType = 'OD' | 'OG';
+export type PrescriptionSource = 'INTERNAL' | 'EXTERNAL';
 
 export interface Prescription {
   id: string;
@@ -15,6 +16,9 @@ export interface Prescription {
   medication?: string;
   dosage?: string;
   duration?: string;
+  source: PrescriptionSource; // Interne (dispensaire) ou externe
+  externalDoctor?: string; // Nom du médecin externe si source = EXTERNAL
+  externalClinic?: string; // Clinique/hôpital externe
   notes?: string;
 }
 
@@ -53,6 +57,9 @@ export interface CreatePrescriptionDto {
   medication?: string;
   dosage?: string;
   duration?: string;
+  source?: PrescriptionSource; // Défaut: INTERNAL
+  externalDoctor?: string;
+  externalClinic?: string;
   notes?: string;
 }
 

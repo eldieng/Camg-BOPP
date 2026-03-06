@@ -14,6 +14,13 @@ export const createPatientValidation = [
     .withMessage('Le prénom est requis')
     .isLength({ max: 100 })
     .withMessage('Le prénom ne peut pas dépasser 100 caractères'),
+  body('isVIP')
+    .optional()
+    .isBoolean()
+    .withMessage('isVIP doit être un booléen'),
+  body('vipReason')
+    .optional()
+    .trim(),
   body('lastName')
     .trim()
     .notEmpty()
@@ -99,7 +106,22 @@ export const updatePatientValidation = [
   body('emergencyContact').optional().trim(),
   body('isPregnant').optional().isBoolean(),
   body('isDisabled').optional().isBoolean(),
+  body('isVIP').optional().isBoolean(),
+  body('vipReason').optional().trim(),
   body('notes').optional().trim(),
+];
+
+/**
+ * Validations pour la mise à jour du statut VIP
+ */
+export const updateVIPValidation = [
+  param('id').isUUID().withMessage('ID patient invalide'),
+  body('isVIP')
+    .isBoolean()
+    .withMessage('isVIP est requis et doit être un booléen'),
+  body('vipReason')
+    .optional()
+    .trim(),
 ];
 
 /**
@@ -255,6 +277,54 @@ export class PatientController {
     } catch (error) {
       console.error('Erreur suppression patient:', error);
       sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la suppression du patient', 500);
+    }
+  }
+
+  /**
+   * GET /api/patients/registration/:registrationNumber
+   * Rechercher un patient par numéro d'immatriculation
+   */
+  async findByRegistrationNumber(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const patient = await patientService.findByRegistrationNumber(req.params.registrationNumber);
+
+      if (!patient) {
+        sendError(res, ErrorCodes.NOT_FOUND, 'Patient non trouvé', 404);
+        return;
+      }
+
+      const patientWithAge = {
+        ...patient,
+        age: patientService.calculateAge(patient.dateOfBirth),
+      };
+
+      sendSuccess(res, patientWithAge);
+    } catch (error) {
+      console.error('Erreur recherche par immatriculation:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la recherche', 500);
+    }
+  }
+
+  /**
+   * PATCH /api/patients/:id/vip
+   * Mettre à jour le statut VIP d'un patient
+   */
+  async updateVIPStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const existingPatient = await patientService.findById(req.params.id);
+
+      if (!existingPatient) {
+        sendError(res, ErrorCodes.NOT_FOUND, 'Patient non trouvé', 404);
+        return;
+      }
+
+      const { isVIP, vipReason } = req.body;
+      const patient = await patientService.updateVIPStatus(req.params.id, isVIP, vipReason);
+      
+      sendSuccess(res, patient, 200, isVIP ? 'Patient marqué VIP' : 'Statut VIP retiré');
+    } catch (error) {
+      console.error('Erreur mise à jour VIP:', error);
+      sendError(res, ErrorCodes.INTERNAL_ERROR, 'Erreur lors de la mise à jour du statut VIP', 500);
     }
   }
 }

@@ -10,7 +10,7 @@ export interface Ticket {
   ticketNumber: string;
   qrCode: string;
   patientId: string;
-  patient: Pick<Patient, 'id' | 'firstName' | 'lastName' | 'dateOfBirth'>;
+  patient: Pick<Patient, 'id' | 'firstName' | 'lastName' | 'dateOfBirth' | 'registrationNumber' | 'isVIP' | 'vipReason'>;
   priority: Priority;
   priorityReason?: string;
   status: TicketStatus;

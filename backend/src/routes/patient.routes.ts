@@ -4,6 +4,7 @@ import {
   createPatientValidation,
   updatePatientValidation,
   searchPatientValidation,
+  updateVIPValidation,
 } from '../controllers/patient.controller.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 import { validate } from '../middleware/validation.js';
@@ -44,6 +45,15 @@ router.post(
 );
 
 /**
+ * GET /api/patients/registration/:registrationNumber
+ * Rechercher par numéro d'immatriculation
+ */
+router.get(
+  '/registration/:registrationNumber',
+  (req, res) => patientController.findByRegistrationNumber(req, res)
+);
+
+/**
  * GET /api/patients/:id
  * Détail d'un patient
  */
@@ -70,6 +80,17 @@ router.put(
   authorize('ACCUEIL', 'ADMIN'),
   validate(updatePatientValidation),
   (req, res) => patientController.update(req, res)
+);
+
+/**
+ * PATCH /api/patients/:id/vip
+ * Mettre à jour le statut VIP
+ */
+router.patch(
+  '/:id/vip',
+  authorize('ACCUEIL', 'ADMIN'),
+  validate(updateVIPValidation),
+  (req, res) => patientController.updateVIPStatus(req, res)
 );
 
 /**

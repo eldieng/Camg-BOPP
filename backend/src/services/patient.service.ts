@@ -11,6 +11,8 @@ export interface CreatePatientDto {
   emergencyContact?: string;
   isPregnant?: boolean;
   isDisabled?: boolean;
+  isVIP?: boolean;
+  vipReason?: string;
   notes?: string;
 }
 
@@ -36,11 +38,43 @@ export interface PaginatedPatients {
 
 export class PatientService {
   /**
+   * Générer un numéro d'immatriculation unique
+   * Format: CAMG-YYYY-NNNNN (ex: CAMG-2026-00001)
+   */
+  async generateRegistrationNumber(): Promise<string> {
+    const year = new Date().getFullYear();
+    const prefix = `CAMG-${year}-`;
+    
+    // Trouver le dernier numéro de l'année
+    const lastPatient = await prisma.patient.findFirst({
+      where: {
+        registrationNumber: {
+          startsWith: prefix,
+        },
+      },
+      orderBy: {
+        registrationNumber: 'desc',
+      },
+    });
+
+    let nextNumber = 1;
+    if (lastPatient?.registrationNumber) {
+      const lastNumber = parseInt(lastPatient.registrationNumber.split('-')[2], 10);
+      nextNumber = lastNumber + 1;
+    }
+
+    return `${prefix}${nextNumber.toString().padStart(5, '0')}`;
+  }
+
+  /**
    * Créer un nouveau patient
    */
   async create(data: CreatePatientDto): Promise<Patient> {
+    const registrationNumber = await this.generateRegistrationNumber();
+    
     return prisma.patient.create({
       data: {
+        registrationNumber,
         firstName: data.firstName,
         lastName: data.lastName,
         dateOfBirth: new Date(data.dateOfBirth),
@@ -50,6 +84,8 @@ export class PatientService {
         emergencyContact: data.emergencyContact,
         isPregnant: data.isPregnant ?? false,
         isDisabled: data.isDisabled ?? false,
+        isVIP: data.isVIP ?? false,
+        vipReason: data.vipReason,
         notes: data.notes,
       },
     });
@@ -156,6 +192,8 @@ export class PatientService {
     if (data.emergencyContact !== undefined) updateData.emergencyContact = data.emergencyContact;
     if (data.isPregnant !== undefined) updateData.isPregnant = data.isPregnant;
     if (data.isDisabled !== undefined) updateData.isDisabled = data.isDisabled;
+    if ((data as any).isVIP !== undefined) updateData.isVIP = (data as any).isVIP;
+    if ((data as any).vipReason !== undefined) updateData.vipReason = (data as any).vipReason;
     if (data.notes !== undefined) updateData.notes = data.notes;
 
     return prisma.patient.update({
@@ -230,10 +268,33 @@ export class PatientService {
           { firstName: { contains: query, mode: 'insensitive' } },
           { lastName: { contains: query, mode: 'insensitive' } },
           { phone: { contains: query } },
+          { registrationNumber: { contains: query, mode: 'insensitive' } },
         ],
       },
       take: limit,
       orderBy: { lastName: 'asc' },
+    });
+  }
+
+  /**
+   * Rechercher un patient par numéro d'immatriculation
+   */
+  async findByRegistrationNumber(registrationNumber: string): Promise<Patient | null> {
+    return prisma.patient.findUnique({
+      where: { registrationNumber },
+    });
+  }
+
+  /**
+   * Mettre à jour le statut VIP d'un patient
+   */
+  async updateVIPStatus(id: string, isVIP: boolean, vipReason?: string): Promise<Patient> {
+    return prisma.patient.update({
+      where: { id },
+      data: {
+        isVIP,
+        vipReason: isVIP ? vipReason : null,
+      },
     });
   }
 

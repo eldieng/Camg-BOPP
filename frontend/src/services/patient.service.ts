@@ -3,6 +3,7 @@ import { ApiResponse } from '../types';
 
 export interface Patient {
   id: string;
+  registrationNumber: string; // Numéro d'immatriculation unique (CAMG-YYYY-NNNNN)
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -12,6 +13,8 @@ export interface Patient {
   emergencyContact?: string;
   isPregnant: boolean;
   isDisabled: boolean;
+  isVIP: boolean;
+  vipReason?: string;
   notes?: string;
   age?: number;
   createdAt: string;
@@ -28,6 +31,8 @@ export interface CreatePatientDto {
   emergencyContact?: string;
   isPregnant?: boolean;
   isDisabled?: boolean;
+  isVIP?: boolean;
+  vipReason?: string;
   notes?: string;
 }
 
@@ -115,6 +120,31 @@ export const patientService = {
     if (!response.data.success) {
       throw new Error(response.data.error?.message || 'Erreur lors de la suppression');
     }
+  },
+
+  /**
+   * Rechercher par numéro d'immatriculation
+   */
+  async getByRegistrationNumber(registrationNumber: string): Promise<Patient> {
+    const response = await api.get<ApiResponse<Patient>>(`/patients/registration/${registrationNumber}`);
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error?.message || 'Patient non trouvé');
+  },
+
+  /**
+   * Mettre à jour le statut VIP
+   */
+  async updateVIPStatus(id: string, isVIP: boolean, vipReason?: string): Promise<Patient> {
+    const response = await api.patch<ApiResponse<Patient>>(`/patients/${id}/vip`, {
+      isVIP,
+      vipReason,
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error?.message || 'Erreur lors de la mise à jour du statut VIP');
   },
 };
 

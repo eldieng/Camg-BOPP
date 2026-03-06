@@ -459,18 +459,72 @@ export default function MedicamentsPage() {
                   <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
                     <h4 className="font-semibold text-blue-900 flex items-center gap-2 mb-3">
                       <FileText className="w-5 h-5" />
-                      Retour du Médecin
+                      Consultation du Dr. {lastConsultation.doctor?.firstName} {lastConsultation.doctor?.lastName}
+                      <span className="text-xs font-normal text-blue-600 ml-auto">
+                        {new Date(lastConsultation.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </h4>
+                    
+                    {/* Diagnostic - mis en évidence */}
                     {lastConsultation.diagnosis && (
-                      <div className="mb-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-                        <p className="text-sm font-medium text-yellow-800">Diagnostic:</p>
-                        <p className="text-yellow-900">{lastConsultation.diagnosis}</p>
+                      <div className="mb-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                        <p className="text-sm font-bold text-yellow-800 uppercase">🩺 Diagnostic:</p>
+                        <p className="text-yellow-900 font-medium text-lg">{lastConsultation.diagnosis}</p>
                       </div>
                     )}
+
+                    {/* Motif de consultation */}
+                    {lastConsultation.chiefComplaint && (
+                      <div className="mb-3 p-3 bg-gray-100 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700">Motif de consultation:</p>
+                        <p className="text-gray-800">{lastConsultation.chiefComplaint}</p>
+                      </div>
+                    )}
+
+                    {/* Prescriptions médicamenteuses */}
+                    {lastConsultation.prescriptions && lastConsultation.prescriptions.filter(p => p.medication).length > 0 && (
+                      <div className="mb-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <p className="text-sm font-bold text-green-800 uppercase mb-2">💊 Prescriptions médicamenteuses:</p>
+                        <div className="space-y-2">
+                          {lastConsultation.prescriptions.filter(p => p.medication).map((rx, idx) => (
+                            <div key={idx} className="flex items-start gap-2 p-2 bg-white rounded border border-green-100">
+                              <span className="text-green-600 font-bold">{idx + 1}.</span>
+                              <div>
+                                <p className="font-semibold text-green-900">{rx.medication}</p>
+                                {rx.dosage && <p className="text-sm text-green-700">Posologie: {rx.dosage}</p>}
+                                {rx.duration && <p className="text-sm text-green-700">Durée: {rx.duration}</p>}
+                                {rx.notes && <p className="text-xs text-gray-500 italic">{rx.notes}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Prescriptions optiques */}
+                    {lastConsultation.prescriptions && lastConsultation.prescriptions.filter(p => p.lensType || p.sphere !== undefined).length > 0 && (
+                      <div className="mb-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                        <p className="text-sm font-bold text-purple-800 uppercase mb-2">👓 Prescriptions optiques:</p>
+                        <div className="grid grid-cols-2 gap-2 text-sm">
+                          {lastConsultation.prescriptions.filter(p => p.lensType || p.sphere !== undefined).map((rx, idx) => (
+                            <div key={idx} className="p-2 bg-white rounded border border-purple-100">
+                              <p className="font-semibold text-purple-900">{rx.eyeType === 'OD' ? 'Œil Droit (OD)' : 'Œil Gauche (OG)'}</p>
+                              {rx.sphere !== undefined && <p>Sphère: {rx.sphere > 0 ? '+' : ''}{rx.sphere}</p>}
+                              {rx.cylinder !== undefined && <p>Cylindre: {rx.cylinder}</p>}
+                              {rx.axis !== undefined && <p>Axe: {rx.axis}°</p>}
+                              {rx.addition !== undefined && <p>Addition: +{rx.addition}</p>}
+                              {rx.lensType && <p className="text-purple-700">Type: {rx.lensType}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Notes du médecin */}
                     {lastConsultation.notes && (
                       <div className="p-3 bg-gray-100 rounded-lg">
-                        <p className="text-sm font-medium text-gray-700">Notes:</p>
-                        <p className="text-gray-600 text-sm">{lastConsultation.notes}</p>
+                        <p className="text-sm font-medium text-gray-700">📝 Notes du médecin:</p>
+                        <p className="text-gray-600 text-sm whitespace-pre-wrap">{lastConsultation.notes}</p>
                       </div>
                     )}
                   </div>

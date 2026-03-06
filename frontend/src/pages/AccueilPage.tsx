@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { UserPlus, Ticket, Search, RefreshCw, Printer, X, DoorOpen } from 'lucide-react';
+import { UserPlus, Ticket, Search, RefreshCw, Printer, X, DoorOpen, Crown } from 'lucide-react';
 import { Button, Card, CardHeader, CardTitle, CardContent, Input, Alert } from '../components/ui';
 import { patientService, Patient, CreatePatientDto } from '../services/patient.service';
 import { ticketService, Ticket as TicketType, TicketsSummary } from '../services/ticket.service';
@@ -34,6 +34,8 @@ export default function AccueilPage() {
     address: '',
     isPregnant: false,
     isDisabled: false,
+    isVIP: false,
+    vipReason: '',
   });
 
   // Charger les tickets du jour
@@ -114,6 +116,7 @@ export default function AccueilPage() {
       setFormData({
         firstName: '', lastName: '', dateOfBirth: '', gender: 'MALE',
         phone: '', address: '', isPregnant: false, isDisabled: false,
+        isVIP: false, vipReason: '',
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la création');
@@ -291,7 +294,7 @@ export default function AccueilPage() {
                 </div>
                 <Input label="Téléphone" value={formData.phone || ''} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} />
                 <Input label="Adresse" value={formData.address || ''} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-6">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 flex-wrap">
                   <label className="flex items-center">
                     <input type="checkbox" checked={formData.isPregnant} onChange={(e) => setFormData({ ...formData, isPregnant: e.target.checked })} className="mr-2" />
                     Femme enceinte
@@ -300,7 +303,20 @@ export default function AccueilPage() {
                     <input type="checkbox" checked={formData.isDisabled} onChange={(e) => setFormData({ ...formData, isDisabled: e.target.checked })} className="mr-2" />
                     Personne handicapée
                   </label>
+                  <label className="flex items-center">
+                    <input type="checkbox" checked={formData.isVIP} onChange={(e) => setFormData({ ...formData, isVIP: e.target.checked })} className="mr-2" />
+                    <Crown className="w-4 h-4 text-yellow-500 mr-1" />
+                    VIP
+                  </label>
                 </div>
+                {formData.isVIP && (
+                  <Input 
+                    label="Raison VIP" 
+                    placeholder="Ex: Bienfaiteur, Partenaire..." 
+                    value={formData.vipReason || ''} 
+                    onChange={(e) => setFormData({ ...formData, vipReason: e.target.value })} 
+                  />
+                )}
                 <Button type="submit" className="w-full" isLoading={isLoading} leftIcon={<Ticket className="w-5 h-5" />}>
                   Créer Patient & Ticket
                 </Button>
@@ -312,7 +328,11 @@ export default function AccueilPage() {
                   <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
                     {searchResults.map((patient) => (
                       <button key={patient.id} onClick={() => setSelectedPatient(patient)} className={`w-full p-3 text-left hover:bg-gray-50 ${selectedPatient?.id === patient.id ? 'bg-primary-50' : ''}`}>
-                        <p className="font-medium">{patient.lastName} {patient.firstName}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium">{patient.lastName} {patient.firstName}</p>
+                          {patient.isVIP && <span title={patient.vipReason || 'VIP'}><Crown className="w-4 h-4 text-yellow-500" /></span>}
+                        </div>
+                        <p className="text-xs text-primary-600 font-mono">{patient.registrationNumber}</p>
                         <p className="text-sm text-gray-500">{patient.phone || 'Pas de téléphone'}</p>
                       </button>
                     ))}
@@ -320,7 +340,17 @@ export default function AccueilPage() {
                 )}
                 {selectedPatient && (
                   <div className="p-4 bg-primary-50 rounded-lg">
-                    <p className="font-medium">{selectedPatient.lastName} {selectedPatient.firstName}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{selectedPatient.lastName} {selectedPatient.firstName}</p>
+                      {selectedPatient.isVIP && (
+                        <span className="flex items-center gap-1 px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-full text-xs">
+                          <Crown className="w-3 h-3" /> VIP
+                        </span>
+                      )}
+                    </div>
+                    {selectedPatient.registrationNumber && (
+                      <p className="text-xs text-primary-600 font-mono">{selectedPatient.registrationNumber}</p>
+                    )}
                     <p className="text-sm text-gray-600">Né(e) le {new Date(selectedPatient.dateOfBirth).toLocaleDateString('fr-FR')}</p>
                     <Button onClick={handleCreateTicketForPatient} className="mt-3 w-full" isLoading={isLoading} leftIcon={<Ticket className="w-5 h-5" />}>
                       Créer un Ticket
@@ -461,7 +491,13 @@ export default function AccueilPage() {
                       <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                         <span className="text-base sm:text-lg font-bold text-primary-600 flex-shrink-0">{ticket.ticketNumber.split('-')[1]}</span>
                         <div className="min-w-0">
-                          <p className="font-medium text-sm sm:text-base truncate">{ticket.patient.lastName} {ticket.patient.firstName}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="font-medium text-sm sm:text-base truncate">{ticket.patient.lastName} {ticket.patient.firstName}</p>
+                            {ticket.patient.isVIP && <Crown className="w-3 h-3 text-yellow-500 flex-shrink-0" />}
+                          </div>
+                          {ticket.patient.registrationNumber && (
+                            <p className="text-xs text-gray-400 font-mono">{ticket.patient.registrationNumber}</p>
+                          )}
                           <span className={`text-xs px-2 py-0.5 rounded-full ${ticketService.getPriorityColor(ticket.priority)}`}>
                             {ticketService.getPriorityLabel(ticket.priority)}
                           </span>

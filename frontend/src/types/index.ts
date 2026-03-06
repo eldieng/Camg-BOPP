@@ -46,6 +46,7 @@ export interface ValidationError {
 // Types Patient
 export interface Patient {
   id: string;
+  registrationNumber: string; // Numéro d'immatriculation unique (CAMG-YYYY-NNNNN)
   firstName: string;
   lastName: string;
   dateOfBirth: string;
@@ -55,10 +56,15 @@ export interface Patient {
   emergencyContact?: string;
   isPregnant: boolean;
   isDisabled: boolean;
+  isVIP: boolean; // Statut VIP
+  vipReason?: string; // Raison du statut VIP
   notes?: string;
   createdAt: string;
   updatedAt: string;
 }
+
+// Types Prescription Source
+export type PrescriptionSource = 'INTERNAL' | 'EXTERNAL';
 
 // Types Ticket
 export type TicketStatus = 'WAITING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';

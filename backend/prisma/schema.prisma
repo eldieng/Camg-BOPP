@@ -125,6 +125,11 @@ enum EyeType {
   OG
 }
 
+enum PrescriptionSource {
+  INTERNAL   // Ordonnance du dispensaire
+  EXTERNAL   // Ordonnance externe (autre médecin)
+}
+
 // ============================================
 // MODÈLES
 // ============================================
@@ -150,19 +155,22 @@ model User {
 }
 
 model Patient {
-  id               String   @id @default(uuid())
-  firstName        String
-  lastName         String
-  dateOfBirth      DateTime
-  gender           Gender
-  address          String?
-  phone            String?
-  emergencyContact String?
-  isPregnant       Boolean  @default(false)
-  isDisabled       Boolean  @default(false)
-  notes            String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  registrationNumber String   @unique // Numéro d'immatriculation unique (ex: CAMG-2026-00001)
+  firstName          String
+  lastName           String
+  dateOfBirth        DateTime
+  gender             Gender
+  address            String?
+  phone              String?
+  emergencyContact   String?
+  isPregnant         Boolean  @default(false)
+  isDisabled         Boolean  @default(false)
+  isVIP              Boolean  @default(false) // Patient VIP (priorité spéciale)
+  vipReason          String?  // Raison du statut VIP
+  notes              String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 
   tickets       Ticket[]
   visionTests   VisionTest[]
@@ -172,6 +180,7 @@ model Patient {
   surgeries     Surgery[]
   gateEntries   GateEntry[]
 
+  @@index([registrationNumber])
   @@index([lastName, firstName])
   @@index([phone])
   @@map("patients")
@@ -289,6 +298,10 @@ model Prescription {
   medication String?
   dosage     String?
   duration   String?
+
+  source           PrescriptionSource @default(INTERNAL) // Interne ou externe
+  externalDoctor   String?  // Nom du médecin externe si source = EXTERNAL
+  externalClinic   String?  // Clinique/hôpital externe
 
   notes String?
 

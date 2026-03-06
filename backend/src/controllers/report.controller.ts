@@ -67,6 +67,75 @@ export class ReportController {
       });
     }
   }
+  /**
+   * Statistiques des prescriptions
+   */
+  async getPrescriptionStats(req: Request, res: Response) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      let start: Date;
+      let end: Date;
+
+      if (startDate && endDate) {
+        start = new Date(startDate as string);
+        end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+      } else {
+        const now = new Date();
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
+
+      const stats = await reportService.getPrescriptionStats(start, end);
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      console.error('Erreur getPrescriptionStats:', error);
+      res.status(500).json({
+        success: false,
+        error: { message: 'Erreur lors de la récupération des statistiques' },
+      });
+    }
+  }
+
+  /**
+   * Statistiques des services manquants
+   */
+  async getMissingServicesStats(req: Request, res: Response) {
+    try {
+      const { startDate, endDate } = req.query;
+
+      let start: Date;
+      let end: Date;
+
+      if (startDate && endDate) {
+        start = new Date(startDate as string);
+        end = new Date(endDate as string);
+        end.setHours(23, 59, 59, 999);
+      } else {
+        const now = new Date();
+        start = new Date(now.getFullYear(), now.getMonth(), 1);
+        end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+      }
+
+      const stats = await reportService.getMissingServicesStats(start, end);
+
+      res.json({
+        success: true,
+        data: stats,
+      });
+    } catch (error) {
+      console.error('Erreur getMissingServicesStats:', error);
+      res.status(500).json({
+        success: false,
+        error: { message: 'Erreur lors de la récupération des statistiques' },
+      });
+    }
+  }
 }
 
 export const reportController = new ReportController();

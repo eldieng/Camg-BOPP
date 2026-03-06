@@ -106,9 +106,12 @@ async function main() {
   ];
 
   const patients = [];
-  for (const p of patientsData) {
+  const year = new Date().getFullYear();
+  for (let i = 0; i < patientsData.length; i++) {
+    const p = patientsData[i];
     const patient = await prisma.patient.create({
       data: {
+        registrationNumber: `CAMG-${year}-${String(i + 1).padStart(5, '0')}`,
         firstName: p.firstName,
         lastName: p.lastName,
         gender: p.gender,
@@ -117,6 +120,8 @@ async function main() {
         address: 'Dakar, Sénégal',
         isPregnant: p.isPregnant || false,
         isDisabled: p.isDisabled || false,
+        isVIP: i === 0, // Premier patient est VIP pour test
+        vipReason: i === 0 ? 'Bienfaiteur du dispensaire' : null,
       },
     });
     patients.push(patient);

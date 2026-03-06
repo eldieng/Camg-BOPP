@@ -11,6 +11,8 @@ import appointmentRoutes from './appointment.routes.js';
 import reportRoutes from './report.routes.js';
 import surgeryRoutes from './surgery.routes.js';
 import gateRoutes from './gate.routes.js';
+import referralRoutes from './referral.routes.js';
+import orderRoutes from './order.routes.js';
 
 const router = Router();
 
@@ -49,6 +51,12 @@ router.use('/surgery', surgeryRoutes);
 
 // Routes porte d'entrée
 router.use('/gate', gateRoutes);
+
+// Routes orientations patients
+router.use('/referrals', referralRoutes);
+
+// Routes bons de commande
+router.use('/orders', orderRoutes);
 
 // Route de santé
 router.get('/health', (_req, res) => {

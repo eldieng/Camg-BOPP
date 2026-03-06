@@ -377,6 +377,176 @@ export class ReportService {
       })),
     };
   }
+
+  /**
+   * Statistiques des prescriptions (types de traitements les plus fréquents)
+   */
+  async getPrescriptionStats(startDate: Date, endDate: Date) {
+    // Médicaments les plus prescrits
+    const medicationStats = await prisma.prescription.groupBy({
+      by: ['medication'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        medication: { not: null },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 20,
+    });
+
+    // Types de verres les plus prescrits
+    const lensStats = await prisma.prescription.groupBy({
+      by: ['lensType'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        lensType: { not: null },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    // Diagnostics les plus fréquents
+    const diagnosisStats = await prisma.consultation.groupBy({
+      by: ['diagnosis'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+        diagnosis: { not: null },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 20,
+    });
+
+    // Prescriptions par source (interne vs externe)
+    const sourceStats = await prisma.prescription.groupBy({
+      by: ['source'],
+      where: {
+        createdAt: { gte: startDate, lte: endDate },
+      },
+      _count: { id: true },
+    });
+
+    // Total prescriptions
+    const totalPrescriptions = await prisma.prescription.count({
+      where: { createdAt: { gte: startDate, lte: endDate } },
+    });
+
+    // Prescriptions médicamenteuses vs optiques
+    const [medicationCount, opticalCount] = await Promise.all([
+      prisma.prescription.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          medication: { not: null },
+        },
+      }),
+      prisma.prescription.count({
+        where: {
+          createdAt: { gte: startDate, lte: endDate },
+          OR: [
+            { lensType: { not: null } },
+            { sphere: { not: null } },
+          ],
+        },
+      }),
+    ]);
+
+    return {
+      period: { start: startDate.toISOString(), end: endDate.toISOString() },
+      total: totalPrescriptions,
+      byType: {
+        medication: medicationCount,
+        optical: opticalCount,
+      },
+      bySource: sourceStats.map(s => ({
+        source: s.source,
+        count: s._count.id,
+        percentage: Math.round((s._count.id / totalPrescriptions) * 100),
+      })),
+      topMedications: medicationStats.map(m => ({
+        name: m.medication,
+        count: m._count.id,
+      })),
+      topLensTypes: lensStats.map(l => ({
+        type: l.lensType,
+        count: l._count.id,
+      })),
+      topDiagnoses: diagnosisStats.map(d => ({
+        diagnosis: d.diagnosis,
+        count: d._count.id,
+      })),
+    };
+  }
+
+  /**
+   * Statistiques des services manquants (basé sur les referrals)
+   */
+  async getMissingServicesStats(startDate: Date, endDate: Date) {
+    // Services les plus demandés en externe
+    const serviceStats = await prisma.referral.groupBy({
+      by: ['serviceNeeded'],
+      where: {
+        referralDate: { gte: startDate, lte: endDate },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+    });
+
+    // Raisons d'orientation
+    const reasonStats = await prisma.referral.groupBy({
+      by: ['reason'],
+      where: {
+        referralDate: { gte: startDate, lte: endDate },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+    });
+
+    // Structures externes les plus sollicitées
+    const clinicStats = await prisma.referral.groupBy({
+      by: ['externalClinic'],
+      where: {
+        referralDate: { gte: startDate, lte: endDate },
+      },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 10,
+    });
+
+    // Total et statuts
+    const [total, byStatus] = await Promise.all([
+      prisma.referral.count({
+        where: { referralDate: { gte: startDate, lte: endDate } },
+      }),
+      prisma.referral.groupBy({
+        by: ['status'],
+        where: { referralDate: { gte: startDate, lte: endDate } },
+        _count: { id: true },
+      }),
+    ]);
+
+    return {
+      period: { start: startDate.toISOString(), end: endDate.toISOString() },
+      total,
+      byStatus: byStatus.map(s => ({
+        status: s.status,
+        count: s._count.id,
+      })),
+      missingServices: serviceStats.map(s => ({
+        service: s.serviceNeeded,
+        count: s._count.id,
+        percentage: total > 0 ? Math.round((s._count.id / total) * 100) : 0,
+      })),
+      byReason: reasonStats.map(r => ({
+        reason: r.reason,
+        count: r._count.id,
+      })),
+      topExternalClinics: clinicStats.map(c => ({
+        clinic: c.externalClinic,
+        count: c._count.id,
+      })),
+    };
+  }
 }
 
 export const reportService = new ReportService();

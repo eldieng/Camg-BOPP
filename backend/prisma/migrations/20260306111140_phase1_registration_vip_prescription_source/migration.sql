@@ -10,10 +10,15 @@ ADD COLUMN "vipReason" TEXT;
 -- AlterTable patients: add registrationNumber (nullable first)
 ALTER TABLE "patients" ADD COLUMN "registrationNumber" TEXT;
 
--- Generate registration numbers for existing patients
-UPDATE "patients" 
-SET "registrationNumber" = 'CAMG-' || EXTRACT(YEAR FROM "createdAt")::TEXT || '-' || LPAD(ROW_NUMBER() OVER (ORDER BY "createdAt")::TEXT, 5, '0')
-WHERE "registrationNumber" IS NULL;
+-- Generate registration numbers for existing patients using a subquery
+UPDATE "patients" p
+SET "registrationNumber" = 'CAMG-' || EXTRACT(YEAR FROM p."createdAt")::TEXT || '-' || LPAD(sub.rn::TEXT, 5, '0')
+FROM (
+  SELECT id, ROW_NUMBER() OVER (ORDER BY "createdAt") as rn
+  FROM "patients"
+  WHERE "registrationNumber" IS NULL
+) sub
+WHERE p.id = sub.id AND p."registrationNumber" IS NULL;
 
 -- Now make it NOT NULL and add constraints
 ALTER TABLE "patients" ALTER COLUMN "registrationNumber" SET NOT NULL;

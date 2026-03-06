@@ -179,6 +179,7 @@ model Patient {
   labAnalyses   LabAnalysis[]
   surgeries     Surgery[]
   gateEntries   GateEntry[]
+  referrals     Referral[]
 
   @@index([registrationNumber])
   @@index([lastName, firstName])
@@ -275,6 +276,7 @@ model Consultation {
   prescriptions Prescription[]
   labAnalyses   LabAnalysis[]
   surgeries     Surgery[]
+  referrals     Referral[]
 
   @@index([patientId])
   @@index([doctorId])
@@ -433,6 +435,7 @@ model Surgery {
   surgeon      User?         @relation("SurgeonSurgeries", fields: [surgeonId], references: [id])
   analysis     LabAnalysis?  @relation(fields: [analysisId], references: [id])
   followUps    PostOpFollowUp[]
+  materials    PreOpMaterial[]
 
   @@index([patientId])
   @@index([status])
@@ -478,4 +481,143 @@ model AuditLog {
   @@index([createdAt])
   @@index([entity])
   @@map("audit_logs")
+}
+
+// ============================================
+// ORIENTATION PATIENTS (REFERRALS)
+// ============================================
+
+enum ReferralStatus {
+  PENDING      // En attente de prise en charge
+  IN_PROGRESS  // Patient en cours de traitement ailleurs
+  COMPLETED    // Traitement terminé
+  CANCELLED    // Annulé
+  LOST         // Patient perdu de vue
+}
+
+enum ReferralReason {
+  SERVICE_UNAVAILABLE  // Service non disponible au dispensaire
+  EQUIPMENT_MISSING    // Équipement manquant
+  SPECIALIST_NEEDED    // Spécialiste requis
+  EMERGENCY            // Urgence nécessitant transfert
+  PATIENT_CHOICE       // Choix du patient
+  OTHER                // Autre raison
+}
+
+model Referral {
+  id              String         @id @default(uuid())
+  patientId       String
+  consultationId  String?
+  referredBy      String         // ID du médecin qui oriente
+  
+  reason          ReferralReason
+  customReason    String?        // Si reason = OTHER
+  serviceNeeded   String         // Service requis (ex: "Chirurgie rétine", "IRM")
+  externalClinic  String         // Nom de la structure externe
+  externalDoctor  String?        // Nom du médecin externe si connu
+  externalPhone   String?        // Téléphone de la structure
+  externalAddress String?        // Adresse de la structure
+  
+  status          ReferralStatus @default(PENDING)
+  referralDate    DateTime       @default(now())
+  appointmentDate DateTime?      // Date du RDV externe si connu
+  completedDate   DateTime?      // Date de fin de traitement
+  
+  diagnosis       String?        // Diagnostic initial
+  treatmentNotes  String?        // Notes sur le traitement reçu ailleurs
+  followUpNeeded  Boolean        @default(true) // Suivi requis au retour
+  followUpDate    DateTime?      // Date de suivi prévue
+  
+  notes           String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  consultation Consultation? @relation(fields: [consultationId], references: [id])
+
+  @@index([patientId])
+  @@index([status])
+  @@index([reason])
+  @@index([serviceNeeded])
+  @@index([referralDate])
+  @@map("referrals")
+}
+
+// ============================================
+// BONS DE COMMANDE INTERNES
+// ============================================
+
+enum OrderStatus {
+  DRAFT        // Brouillon
+  SUBMITTED    // Soumis
+  APPROVED     // Approuvé
+  IN_PROGRESS  // En cours de traitement
+  COMPLETED    // Livré
+  CANCELLED    // Annulé
+}
+
+model InternalOrder {
+  id            String      @id @default(uuid())
+  orderNumber   String      @unique // Numéro de commande (BC-YYYY-NNNNN)
+  requestedBy   String      // ID de l'utilisateur qui fait la commande
+  station       Station     // Station qui fait la commande (LUNETTES, etc.)
+  
+  status        OrderStatus @default(DRAFT)
+  priority      Priority    @default(NORMAL)
+  
+  requestDate   DateTime    @default(now())
+  neededByDate  DateTime?   // Date limite souhaitée
+  approvedDate  DateTime?
+  approvedBy    String?     // ID de l'admin qui approuve
+  completedDate DateTime?
+  
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  items         OrderItem[]
+
+  @@index([station])
+  @@index([status])
+  @@index([requestDate])
+  @@map("internal_orders")
+}
+
+model OrderItem {
+  id          String  @id @default(uuid())
+  orderId     String
+  
+  itemName    String  // Nom de l'article
+  description String? // Description détaillée
+  quantity    Int
+  unit        String? // Unité (pièces, boîtes, etc.)
+  
+  notes       String?
+
+  order InternalOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// ============================================
+// MATÉRIEL PRÉOPÉRATOIRE
+// ============================================
+
+model PreOpMaterial {
+  id          String   @id @default(uuid())
+  surgeryId   String
+  
+  itemName    String   // Nom du matériel
+  category    String?  // Catégorie (Instruments, Consommables, Implants, etc.)
+  quantity    Int      @default(1)
+  isAvailable Boolean  @default(false) // Disponible en stock
+  isPrepared  Boolean  @default(false) // Préparé pour l'opération
+  
+  notes       String?
+  createdAt   DateTime @default(now())
+
+  surgery Surgery @relation(fields: [surgeryId], references: [id], onDelete: Cascade)
+
+  @@index([surgeryId])
+  @@map("pre_op_materials")
 }

@@ -15,7 +15,6 @@ import {
   eyeLabels,
   analysisTypeLabels,
 } from '../services/surgery.service';
-import { glassesOrderService, lensTypeOptions, coatingOptions } from '../services/glassesOrder.service';
 
 export default function ConsultationRoomPage() {
   const { roomNumber } = useParams<{ roomNumber: string }>();
@@ -38,16 +37,6 @@ export default function ConsultationRoomPage() {
     operatedEye: 'OD' as OperatedEye,
     anesthesiaType: 'Locale',
     analyses: [] as AnalysisType[],
-  });
-
-  const [showGlassesModal, setShowGlassesModal] = useState(false);
-  const [glassesForm, setGlassesForm] = useState({
-    lensType: '',
-    coating: '',
-    frameType: '',
-    frameReference: '',
-    pupillaryDistance: '',
-    notes: '',
   });
 
   const [formData, setFormData] = useState<CreateConsultationDto>({
@@ -192,57 +181,6 @@ export default function ConsultationRoomPage() {
       setPatientHistory(null);
       setFormData({ patientId: '', chiefComplaint: '', diagnosis: '', notes: '', intraocularPressureOD: undefined, intraocularPressureOG: undefined, prescriptions: [] });
       setBlocForm({ type: 'CATARACTE', customType: '', operatedEye: 'OD', anesthesiaType: 'Locale', analyses: [] });
-      setTimeout(() => setSuccess(''), 4000);
-      loadQueue();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erreur');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Créer commande de lunettes et envoyer patient
-  const handleGlassesOrder = async () => {
-    if (!currentPatient) return;
-    setError('');
-    setIsLoading(true);
-    try {
-      // 1. Créer la consultation
-      const consultation = await consultationService.create({ ...formData, queueEntryId: currentPatient.id });
-
-      // 2. Extraire les prescriptions optiques OD et OG
-      const odPrescription = formData.prescriptions?.find(p => p.eyeType === 'OD');
-      const ogPrescription = formData.prescriptions?.find(p => p.eyeType === 'OG');
-
-      // 3. Créer la commande de lunettes
-      await glassesOrderService.create({
-        patientId: currentPatient.ticket.patient.id,
-        consultationId: consultation.id,
-        odSphere: odPrescription?.sphere,
-        odCylinder: odPrescription?.cylinder,
-        odAxis: odPrescription?.axis,
-        odAddition: odPrescription?.addition,
-        ogSphere: ogPrescription?.sphere,
-        ogCylinder: ogPrescription?.cylinder,
-        ogAxis: ogPrescription?.axis,
-        ogAddition: ogPrescription?.addition,
-        lensType: glassesForm.lensType || odPrescription?.lensType || ogPrescription?.lensType,
-        coating: glassesForm.coating || odPrescription?.coating || ogPrescription?.coating,
-        frameType: glassesForm.frameType || undefined,
-        frameReference: glassesForm.frameReference || undefined,
-        pupillaryDistance: glassesForm.pupillaryDistance ? parseFloat(glassesForm.pupillaryDistance) : undefined,
-        notes: glassesForm.notes || undefined,
-      });
-
-      // 4. Terminer le service (patient reviendra chercher ses lunettes)
-      await queueService.completeService(currentPatient.id);
-
-      setSuccess('Commande de lunettes créée - Le patient sera notifié quand les lunettes seront prêtes');
-      setShowGlassesModal(false);
-      setCurrentPatient(null);
-      setPatientHistory(null);
-      setFormData({ patientId: '', chiefComplaint: '', diagnosis: '', notes: '', intraocularPressureOD: undefined, intraocularPressureOG: undefined, prescriptions: [] });
-      setGlassesForm({ lensType: '', coating: '', frameType: '', frameReference: '', pupillaryDistance: '', notes: '' });
       setTimeout(() => setSuccess(''), 4000);
       loadQueue();
     } catch (err) {
@@ -516,8 +454,8 @@ export default function ConsultationRoomPage() {
 
                   <div className="flex flex-col gap-2">
                     <div className="flex space-x-2">
-                      <Button type="button" className="flex-1 bg-purple-600 hover:bg-purple-700 text-white" isLoading={isLoading} onClick={() => setShowGlassesModal(true)} leftIcon={<Glasses className="w-5 h-5" />}>
-                        Commander Lunettes
+                      <Button type="button" variant="success" className="flex-1" isLoading={isLoading} onClick={() => handleSubmit('LUNETTES')} leftIcon={<Glasses className="w-5 h-5" />}>
+                        Envoyer aux Lunettes
                       </Button>
                       <Button type="button" className="flex-1 bg-teal-600 hover:bg-teal-700" isLoading={isLoading} onClick={() => handleSubmit('MEDICAMENTS')} leftIcon={<Pill className="w-5 h-5" />}>
                         Envoyer aux Médicaments
@@ -606,79 +544,6 @@ export default function ConsultationRoomPage() {
                     </div>
                   )}
 
-                  {/* Modal Commande Lunettes */}
-                  {showGlassesModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                        <div className="flex justify-between items-center p-4 border-b bg-purple-50">
-                          <h3 className="text-lg font-bold text-purple-800 flex items-center gap-2">
-                            <Glasses className="w-5 h-5" /> Commander Lunettes
-                          </h3>
-                          <button onClick={() => setShowGlassesModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
-                        </div>
-                        <div className="p-4 space-y-4">
-                          <p className="text-sm text-gray-600">Patient: <strong>{currentPatient?.ticket.patient.lastName} {currentPatient?.ticket.patient.firstName}</strong></p>
-
-                          {/* Résumé prescription */}
-                          {formData.prescriptions && formData.prescriptions.length > 0 && (
-                            <div className="bg-blue-50 p-3 rounded-lg text-sm">
-                              <p className="font-medium text-blue-800 mb-2">Prescription optique:</p>
-                              <div className="grid grid-cols-2 gap-2">
-                                {formData.prescriptions.map((p, i) => (
-                                  <div key={i} className={`p-2 rounded ${p.eyeType === 'OD' ? 'bg-blue-100' : 'bg-green-100'}`}>
-                                    <p className="font-medium">{p.eyeType === 'OD' ? 'OD' : 'OG'}</p>
-                                    <p className="text-xs">Sph: {p.sphere ?? '-'} | Cyl: {p.cylinder ?? '-'} | Axe: {p.axis ?? '-'}°</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Type de verre</label>
-                              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={glassesForm.lensType} onChange={(e) => setGlassesForm({ ...glassesForm, lensType: e.target.value })}>
-                                <option value="">-- Sélectionner --</option>
-                                {lensTypeOptions.map(opt => (
-                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-1">Traitement</label>
-                              <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={glassesForm.coating} onChange={(e) => setGlassesForm({ ...glassesForm, coating: e.target.value })}>
-                                <option value="">-- Sélectionner --</option>
-                                {coatingOptions.map(opt => (
-                                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                ))}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <Input label="Type monture" value={glassesForm.frameType} onChange={(e) => setGlassesForm({ ...glassesForm, frameType: e.target.value })} placeholder="Ex: Métal, Plastique..." />
-                            <Input label="Référence monture" value={glassesForm.frameReference} onChange={(e) => setGlassesForm({ ...glassesForm, frameReference: e.target.value })} placeholder="Ex: RAY-001" />
-                          </div>
-
-                          <Input label="Écart pupillaire (mm)" type="number" step="0.5" value={glassesForm.pupillaryDistance} onChange={(e) => setGlassesForm({ ...glassesForm, pupillaryDistance: e.target.value })} />
-
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Notes pour l'atelier</label>
-                            <textarea className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows={2} value={glassesForm.notes} onChange={(e) => setGlassesForm({ ...glassesForm, notes: e.target.value })} placeholder="Instructions spéciales..." />
-                          </div>
-
-                          <div className="flex gap-2 pt-2">
-                            <Button onClick={handleGlassesOrder} isLoading={isLoading} className="flex-1 bg-purple-600 hover:bg-purple-700">
-                              Créer la commande
-                            </Button>
-                            <Button variant="secondary" onClick={() => setShowGlassesModal(false)} className="flex-1">
-                              Annuler
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
               )}
             </CardContent>

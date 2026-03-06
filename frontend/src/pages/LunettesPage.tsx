@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Glasses, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Stethoscope, Eye } from 'lucide-react';
-import { Button, Card, CardHeader, CardTitle, CardContent } from '../components/ui';
+import { Glasses, Phone, User, Clock, CheckCircle, AlertCircle, RefreshCw, Stethoscope, Eye, ShoppingCart, X } from 'lucide-react';
+import { Button, Card, CardHeader, CardTitle, CardContent, Input } from '../components/ui';
 import { queueService, QueueEntry, StationStats } from '../services/queue.service';
 import { consultationService, Consultation } from '../services/consultation.service';
+import { glassesOrderService, lensTypeOptions, coatingOptions } from '../services/glassesOrder.service';
 
 export default function LunettesPage() {
   const [queue, setQueue] = useState<QueueEntry[]>([]);
@@ -12,6 +13,17 @@ export default function LunettesPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  
+  // Modal commande lunettes
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderForm, setOrderForm] = useState({
+    lensType: '',
+    coating: '',
+    frameType: '',
+    frameReference: '',
+    pupillaryDistance: '',
+    notes: '',
+  });
 
   // Charger la consultation du patient
   const loadPatientConsultation = async (patientId: string) => {
@@ -135,6 +147,54 @@ export default function LunettesPage() {
     } catch (err) {
       console.error('Erreur no-show:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors du marquage absent');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Créer commande de lunettes
+  const handleCreateOrder = async () => {
+    if (!currentPatient || !patientConsultation) {
+      setError('Aucune consultation trouvée pour ce patient');
+      return;
+    }
+    setIsLoading(true);
+    try {
+      setError('');
+      // Extraire les prescriptions optiques OD et OG
+      const odPrescription = patientConsultation.prescriptions?.find(p => p.eyeType === 'OD');
+      const ogPrescription = patientConsultation.prescriptions?.find(p => p.eyeType === 'OG');
+
+      await glassesOrderService.create({
+        patientId: currentPatient.ticket.patient.id,
+        consultationId: patientConsultation.id,
+        odSphere: odPrescription?.sphere,
+        odCylinder: odPrescription?.cylinder,
+        odAxis: odPrescription?.axis,
+        odAddition: odPrescription?.addition,
+        ogSphere: ogPrescription?.sphere,
+        ogCylinder: ogPrescription?.cylinder,
+        ogAxis: ogPrescription?.axis,
+        ogAddition: ogPrescription?.addition,
+        lensType: orderForm.lensType || odPrescription?.lensType || ogPrescription?.lensType,
+        coating: orderForm.coating || odPrescription?.coating || ogPrescription?.coating,
+        frameType: orderForm.frameType || undefined,
+        frameReference: orderForm.frameReference || undefined,
+        pupillaryDistance: orderForm.pupillaryDistance ? parseFloat(orderForm.pupillaryDistance) : undefined,
+        notes: orderForm.notes || undefined,
+      });
+
+      setSuccess('Commande de lunettes créée ! Le patient sera notifié quand les lunettes seront prêtes.');
+      setShowOrderModal(false);
+      setOrderForm({ lensType: '', coating: '', frameType: '', frameReference: '', pupillaryDistance: '', notes: '' });
+      
+      // Terminer le service
+      await queueService.completeService(currentPatient.id);
+      setCurrentPatient(null);
+      setPatientConsultation(null);
+      loadQueue();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erreur lors de la création de la commande');
     } finally {
       setIsLoading(false);
     }
@@ -387,10 +447,16 @@ export default function LunettesPage() {
                     </Button>
                   )}
                   {currentPatient.status === 'IN_SERVICE' && (
-                    <Button onClick={handleComplete} disabled={isLoading} variant="success" className="flex-1">
-                      <CheckCircle className="w-4 h-4 mr-2" />
-                      Terminer
-                    </Button>
+                    <>
+                      <Button onClick={() => setShowOrderModal(true)} disabled={isLoading} className="flex-1 bg-purple-600 hover:bg-purple-700">
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Commander Lunettes
+                      </Button>
+                      <Button onClick={handleComplete} disabled={isLoading} variant="success" className="flex-1">
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Terminer (sans commande)
+                      </Button>
+                    </>
                   )}
                   <Button onClick={handleNoShow} disabled={isLoading} variant="danger" className="w-full sm:w-auto">
                     <AlertCircle className="w-4 h-4 mr-2" />
@@ -427,6 +493,89 @@ export default function LunettesPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal Commander Lunettes */}
+      {showOrderModal && currentPatient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center p-4 border-b bg-purple-50">
+              <h3 className="text-lg font-bold text-purple-800 flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5" /> Commander Lunettes
+              </h3>
+              <button onClick={() => setShowOrderModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-sm text-gray-600">
+                Patient: <strong>{currentPatient.ticket.patient.lastName} {currentPatient.ticket.patient.firstName}</strong>
+              </p>
+
+              {/* Résumé prescription du médecin */}
+              {patientConsultation?.prescriptions && patientConsultation.prescriptions.filter(p => p.sphere !== undefined).length > 0 ? (
+                <div className="bg-blue-50 p-3 rounded-lg text-sm">
+                  <p className="font-medium text-blue-800 mb-2">Prescription du médecin:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {patientConsultation.prescriptions.filter(p => p.sphere !== undefined).map((p, i) => (
+                      <div key={i} className={`p-2 rounded ${p.eyeType === 'OD' ? 'bg-blue-100' : 'bg-green-100'}`}>
+                        <p className="font-medium">{p.eyeType === 'OD' ? 'OD' : 'OG'}</p>
+                        <p className="text-xs">Sph: {p.sphere ?? '-'} | Cyl: {p.cylinder ?? '-'} | Axe: {p.axis ?? '-'}°</p>
+                        {p.addition && <p className="text-xs">Add: {p.addition}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-yellow-50 p-3 rounded-lg text-sm text-yellow-800">
+                  ⚠️ Aucune prescription optique trouvée pour ce patient
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Type de verre</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={orderForm.lensType} onChange={(e) => setOrderForm({ ...orderForm, lensType: e.target.value })}>
+                    <option value="">-- Sélectionner --</option>
+                    {lensTypeOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Traitement</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" value={orderForm.coating} onChange={(e) => setOrderForm({ ...orderForm, coating: e.target.value })}>
+                    <option value="">-- Sélectionner --</option>
+                    {coatingOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input label="Type monture" value={orderForm.frameType} onChange={(e) => setOrderForm({ ...orderForm, frameType: e.target.value })} placeholder="Ex: Métal, Plastique..." />
+                <Input label="Référence monture" value={orderForm.frameReference} onChange={(e) => setOrderForm({ ...orderForm, frameReference: e.target.value })} placeholder="Ex: RAY-001" />
+              </div>
+
+              <Input label="Écart pupillaire (mm)" type="number" step="0.5" value={orderForm.pupillaryDistance} onChange={(e) => setOrderForm({ ...orderForm, pupillaryDistance: e.target.value })} />
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Notes pour l'atelier</label>
+                <textarea className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm" rows={2} value={orderForm.notes} onChange={(e) => setOrderForm({ ...orderForm, notes: e.target.value })} placeholder="Instructions spéciales..." />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button onClick={handleCreateOrder} isLoading={isLoading} className="flex-1 bg-purple-600 hover:bg-purple-700" disabled={!patientConsultation}>
+                  Créer la commande
+                </Button>
+                <Button variant="secondary" onClick={() => setShowOrderModal(false)} className="flex-1">
+                  Annuler
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

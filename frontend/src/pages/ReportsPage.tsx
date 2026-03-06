@@ -69,47 +69,39 @@ export default function ReportsPage() {
 
     const rows: string[][] = [];
     
-    // Header
-    rows.push(['Rapport CAMG-BOPP', '', '']);
-    rows.push(['Période', `${dateRange.start} - ${dateRange.end}`, '']);
-    rows.push(['', '', '']);
+    // En-têtes
+    rows.push(['Métrique', 'Valeur']);
     
-    // Résumé
-    rows.push(['=== RÉSUMÉ GLOBAL ===', '', '']);
-    rows.push(['Patients Total', stats.patients.total.toString(), '']);
-    rows.push(['Nouveaux Patients', stats.patients.new.toString(), '']);
-    rows.push(['Tests de Vue', stats.visionTests.total.toString(), '']);
-    rows.push(['Consultations', stats.consultations.total.toString(), '']);
-    rows.push(['Consultations avec ordonnance', stats.consultations.withPrescriptions.toString(), '']);
-    rows.push(['', '', '']);
-    
-    // Tickets
-    rows.push(['=== TICKETS ===', '', '']);
-    rows.push(['Total émis', stats.tickets.total.toString(), '']);
-    rows.push(['Complétés', stats.tickets.completed.toString(), '']);
-    rows.push(['Annulés', stats.tickets.cancelled.toString(), '']);
-    rows.push(['Taux de complétion', `${stats.tickets.total > 0 ? Math.round((stats.tickets.completed / stats.tickets.total) * 100) : 0}%`, '']);
-    rows.push(['', '', '']);
+    // Données brutes
+    rows.push(['Période début', dateRange.start]);
+    rows.push(['Période fin', dateRange.end]);
+    rows.push(['Patients total', stats.patients.total.toString()]);
+    rows.push(['Nouveaux patients', stats.patients.new.toString()]);
+    rows.push(['Tests de vue', stats.visionTests.total.toString()]);
+    rows.push(['Consultations', stats.consultations.total.toString()]);
+    rows.push(['Consultations avec ordonnance', stats.consultations.withPrescriptions.toString()]);
+    rows.push(['Tickets émis', stats.tickets.total.toString()]);
+    rows.push(['Tickets complétés', stats.tickets.completed.toString()]);
+    rows.push(['Tickets annulés', stats.tickets.cancelled.toString()]);
+    rows.push(['Temps attente moyen (min)', stats.queues.averageWaitTime.toString()]);
     
     // Par station
-    rows.push(['=== ACTIVITÉ PAR STATION ===', '', '']);
-    rows.push(['Station', 'Total', 'Complétés']);
     stats.queues.byStation.forEach(s => {
-      rows.push([s.station, s.total.toString(), s.completed.toString()]);
+      rows.push([`Station ${s.station} - Total`, s.total.toString()]);
+      rows.push([`Station ${s.station} - Complétés`, s.completed.toString()]);
     });
-    rows.push(['', '', '']);
     
     // Journalier
     if (stats.dailyStats.length > 0) {
-      rows.push(['=== ACTIVITÉ JOURNALIÈRE ===', '', '']);
-      rows.push(['Date', 'Patients', 'Consultations', 'Tests de Vue']);
+      rows.push(['', '']);
+      rows.push(['Date', 'Patients', 'Consultations', 'Tests']);
       stats.dailyStats.forEach(d => {
         rows.push([d.date, d.patients.toString(), d.consultations.toString(), d.visionTests.toString()]);
       });
     }
     
     // Convert to CSV
-    const csvContent = rows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const csvContent = rows.map(row => row.join(',')).join('\n');
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');

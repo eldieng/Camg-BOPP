@@ -98,7 +98,7 @@ const navItems: NavItem[] = [
     roles: ['MEDECIN', 'ADMIN'],
   },
   {
-    label: 'Commandes',
+    label: 'Commandes Matériel',
     path: '/commandes',
     icon: <ShoppingCart className="w-5 h-5" />,
     roles: ['LUNETTES', 'MEDICAMENTS', 'BLOC', 'ADMIN'],
@@ -113,7 +113,7 @@ const navItems: NavItem[] = [
     label: 'Statistiques',
     path: '/stats',
     icon: <BarChart3 className="w-5 h-5" />,
-    roles: ['ADMIN'],
+    roles: ['BLOC', 'ADMIN'],
   },
   {
     label: 'Rapports',

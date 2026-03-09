@@ -180,7 +180,7 @@ export default function CommandesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
           <ShoppingCart className="w-6 h-6 text-teal-600" />
-          Bons de Commande
+          Commandes Matériel (Stock)
         </h1>
         <div className="flex gap-2">
           <Button onClick={loadOrders} variant="secondary" leftIcon={<RefreshCw className="w-4 h-4" />} size="sm" isLoading={isLoading}>

@@ -12,7 +12,7 @@ export const createUserValidation = [
   body('password').isLength({ min: 6 }).withMessage('Mot de passe trop court (min 6)'),
   body('firstName').trim().notEmpty().withMessage('Prénom requis'),
   body('lastName').trim().notEmpty().withMessage('Nom requis'),
-  body('role').isIn(['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN']).withMessage('Rôle invalide'),
+  body('role').isIn(['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'BLOC', 'PORTE', 'ADMIN']).withMessage('Rôle invalide'),
 ];
 
 export const updateUserValidation = [
@@ -20,7 +20,7 @@ export const updateUserValidation = [
   body('email').optional().isEmail().withMessage('Email invalide'),
   body('firstName').optional().trim().notEmpty(),
   body('lastName').optional().trim().notEmpty(),
-  body('role').optional().isIn(['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN']),
+  body('role').optional().isIn(['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'BLOC', 'PORTE', 'ADMIN']),
   body('isActive').optional().isBoolean(),
 ];
 

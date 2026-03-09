@@ -406,6 +406,7 @@ export default function PatientsPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
+                      <th className="text-left py-3">N° Immat.</th>
                       <th className="text-left py-3">Nom</th>
                       <th className="text-left py-3">Date de naissance</th>
                       <th className="text-center py-3">Âge</th>
@@ -418,6 +419,7 @@ export default function PatientsPage() {
                   <tbody>
                     {filteredPatients.map((patient) => (
                       <tr key={patient.id} className="border-b hover:bg-gray-50">
+                        <td className="py-3 text-xs font-mono text-blue-600">{patient.registrationNumber || '-'}</td>
                         <td className="py-3 font-medium">{patient.lastName} {patient.firstName}</td>
                         <td className="py-3">{new Date(patient.dateOfBirth).toLocaleDateString('fr-FR')}</td>
                         <td className="py-3 text-center">{calculateAge(patient.dateOfBirth)} ans</td>

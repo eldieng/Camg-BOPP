@@ -427,6 +427,7 @@ export default function AccueilPage() {
                           <div style="font-size:7px;color:#64748b;text-transform:uppercase;">Patient</div>
                           <div style="font-size:11px;font-weight:bold;color:#1e293b;">${createdTicket.patient.lastName.toUpperCase()} ${createdTicket.patient.firstName}</div>
                           <div style="font-size:8px;color:#64748b;">${age} ans</div>
+                          ${createdTicket.patient.registrationNumber ? `<div style="font-size:7px;color:#1e40af;font-family:monospace;margin-top:1mm;">📋 ${createdTicket.patient.registrationNumber}</div>` : ''}
                         </div>
                         <div style="text-align:center;margin:2mm 0;padding:1mm;background:white;border:1px solid #e2e8f0;border-radius:1mm;">
                           <img src="${qrImageBase64}" style="width:60px;height:60px;" />

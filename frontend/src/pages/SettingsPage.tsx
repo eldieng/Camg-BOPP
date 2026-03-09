@@ -159,6 +159,8 @@ export default function SettingsPage() {
                     <option value="MEDECIN">Médecin</option>
                     <option value="LUNETTES">Lunettes</option>
                     <option value="MEDICAMENTS">Médicaments</option>
+                    <option value="BLOC">Bloc Opératoire</option>
+                    <option value="PORTE">Porte d'entrée</option>
                     <option value="ADMIN">Administrateur</option>
                   </select>
                 </div>

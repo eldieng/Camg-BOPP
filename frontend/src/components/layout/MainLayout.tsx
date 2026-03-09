@@ -95,7 +95,7 @@ const navItems: NavItem[] = [
     label: 'Orientations',
     path: '/orientations',
     icon: <ExternalLink className="w-5 h-5" />,
-    roles: ['MEDECIN', 'ADMIN'],
+    roles: ['MEDECIN', 'MEDICAMENTS', 'ADMIN'],
   },
   {
     label: 'Commandes Matériel',

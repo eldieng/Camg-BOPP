@@ -129,7 +129,7 @@ function App() {
             
             {/* Orientations patients */}
             <Route path="orientations" element={
-              <ProtectedRoute allowedRoles={['MEDECIN', 'ADMIN']}>
+              <ProtectedRoute allowedRoles={['MEDECIN', 'MEDICAMENTS', 'ADMIN']}>
                 <OrientationsPage />
               </ProtectedRoute>
             } />

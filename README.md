@@ -419,16 +419,22 @@ VITE_API_URL=http://localhost:3000/api
 
 ---
 
-## 📞 Support
+## 📞 Support & Contact
 
-Pour toute question ou assistance technique, contactez l'équipe de développement.
+Pour toute question ou assistance technique :
+
+**El Hadji Dieng**  
+📍 Dakar, Parcelles Assainies U8, Sénégal  
+📱 +221 77 454 86 61  
+📧 el.elhadji.dieng@gmail.com
 
 ---
 
 ## 📜 Licence
 
-Projet propriétaire - Dispensaire Ophtalmologique CAMG-BOPP
+Projet propriétaire - Dispensaire Ophtalmologique CAMG-BOPP  
+Développé par El Hadji Dieng
 
 ---
 
-*Document créé le 09/12/2024 - Version 1.0*
+*Document créé le 09/12/2024 - Mis à jour le 09/03/2026 - Version 2.0*

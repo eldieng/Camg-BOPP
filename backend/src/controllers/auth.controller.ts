@@ -146,6 +146,31 @@ export class AuthController {
 
     sendSuccess(res, null, 200, result.message);
   }
+
+  /**
+   * PUT /auth/profile
+   * Mettre à jour le profil
+   */
+  async updateProfile(req: AuthenticatedRequest, res: Response): Promise<void> {
+    if (!req.user) {
+      sendError(res, ErrorCodes.UNAUTHORIZED, 'Non authentifié', 401);
+      return;
+    }
+
+    const { firstName, lastName } = req.body;
+
+    const result = await authService.updateProfile(req.user.userId, {
+      firstName,
+      lastName,
+    });
+
+    if (!result.success) {
+      sendError(res, ErrorCodes.VALIDATION_ERROR, result.message, 400);
+      return;
+    }
+
+    sendSuccess(res, result.user, 200, result.message);
+  }
 }
 
 export const authController = new AuthController();

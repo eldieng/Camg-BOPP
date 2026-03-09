@@ -23,6 +23,7 @@ import GatePage from './pages/GatePage';
 import OrientationsPage from './pages/OrientationsPage';
 import CommandesPage from './pages/CommandesPage';
 import AtelierLunettesPage from './pages/AtelierLunettesPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   return (
@@ -147,6 +148,9 @@ function App() {
                 <AtelierLunettesPage />
               </ProtectedRoute>
             } />
+            
+            {/* Profil utilisateur */}
+            <Route path="profil" element={<ProfilePage />} />
           </Route>
 
           {/* Redirection par défaut */}

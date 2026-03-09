@@ -48,4 +48,25 @@ router.put(
   (req, res) => authController.changePassword(req, res)
 );
 
+/**
+ * PUT /api/auth/profile
+ * Mettre à jour le profil
+ */
+router.put(
+  '/profile',
+  authenticate,
+  (req, res) => authController.updateProfile(req, res)
+);
+
+/**
+ * PUT /api/auth/change-password
+ * Alias pour changer le mot de passe (compatibilité frontend)
+ */
+router.put(
+  '/change-password',
+  authenticate,
+  validate(changePasswordValidation),
+  (req, res) => authController.changePassword(req, res)
+);
+
 export default router;

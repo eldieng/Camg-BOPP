@@ -141,6 +141,40 @@ export class AuthService {
 
     return { success: true, message: 'Mot de passe modifié avec succès' };
   }
+
+  /**
+   * Met à jour le profil d'un utilisateur
+   */
+  async updateProfile(
+    userId: string,
+    data: { firstName?: string; lastName?: string }
+  ): Promise<{ success: boolean; message: string; user?: any }> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return { success: false, message: 'Utilisateur non trouvé' };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        firstName: data.firstName || user.firstName,
+        lastName: data.lastName || user.lastName,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        role: true,
+        assignedRoom: true,
+      },
+    });
+
+    return { success: true, message: 'Profil mis à jour avec succès', user: updatedUser };
+  }
 }
 
 export const authService = new AuthService();

@@ -35,7 +35,7 @@ const navItems: NavItem[] = [
     label: 'Tableau de bord',
     path: '/',
     icon: <Home className="w-5 h-5" />,
-    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'],
+    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'BLOC', 'PORTE', 'ADMIN'],
   },
   {
     label: 'Accueil / Tickets',
@@ -53,7 +53,7 @@ const navItems: NavItem[] = [
     label: 'Patients',
     path: '/patients',
     icon: <Users className="w-5 h-5" />,
-    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'ADMIN'],
+    roles: ['ACCUEIL', 'TEST_VUE', 'MEDECIN', 'LUNETTES', 'MEDICAMENTS', 'BLOC', 'PORTE', 'ADMIN'],
   },
   {
     label: 'Test de vue',
@@ -113,7 +113,7 @@ const navItems: NavItem[] = [
     label: 'Statistiques',
     path: '/stats',
     icon: <BarChart3 className="w-5 h-5" />,
-    roles: ['BLOC', 'ADMIN'],
+    roles: ['BLOC', 'PORTE', 'ADMIN'],
   },
   {
     label: 'Rapports',
@@ -210,7 +210,11 @@ export default function MainLayout() {
 
         {/* User info - Fixed at bottom */}
         <div className="p-4 border-t flex-shrink-0 bg-white">
-          <div className="flex items-center space-x-3 mb-3">
+          <NavLink
+            to="/profil"
+            onClick={() => setSidebarOpen(false)}
+            className="flex items-center space-x-3 mb-3 p-2 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+          >
             <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center flex-shrink-0">
               <span className="text-primary-700 font-semibold">
                 {user?.firstName?.[0]}
@@ -231,7 +235,7 @@ export default function MainLayout() {
                 </span>
               )}
             </div>
-          </div>
+          </NavLink>
           <Button
             variant="ghost"
             className="w-full justify-start text-red-600 hover:bg-red-50"
